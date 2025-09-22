@@ -1,4 +1,4 @@
-namespace HouseService
+namespace HouseService.Models
 {
     public class Room
     {

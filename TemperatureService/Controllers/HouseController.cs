@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using TemperatureService.Entities;
+using TemperatureService.Models;
 using TemperatureService.Services;
 using TemperatureService.Data;
 using Microsoft.EntityFrameworkCore;

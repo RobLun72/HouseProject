@@ -1,5 +1,4 @@
 using System.Text.Json;
-using TemperatureService.Entities;
 using TemperatureService.Models;
 
 namespace TemperatureService.Services
