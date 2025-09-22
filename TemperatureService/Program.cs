@@ -1,6 +1,9 @@
 using TemperatureService.Services;
 using TemperatureService.Data;
+using TemperatureService.Consumers;
 using Microsoft.EntityFrameworkCore;
+using MassTransit;
+using MessageContracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +28,33 @@ builder.Services.AddScoped<IHouseDataService, HouseDataService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddScoped<ITemperatureDataSeeder, TemperatureDataSeeder>();
 builder.Services.AddHttpClient();
+
+// Configure MassTransit with RabbitMQ and consumers
+builder.Services.AddMassTransit(x =>
+{
+    // Add consumers
+    x.AddConsumer<HouseCreatedConsumer>();
+    x.AddConsumer<HouseUpdatedConsumer>();
+    x.AddConsumer<HouseDeletedConsumer>();
+    x.AddConsumer<RoomCreatedConsumer>();
+    x.AddConsumer<RoomUpdatedConsumer>();
+    x.AddConsumer<RoomDeletedConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitMqHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+        var rabbitMqUsername = builder.Configuration["RabbitMQ:Username"] ?? "admin";
+        var rabbitMqPassword = builder.Configuration["RabbitMQ:Password"] ?? "admin123";
+
+        cfg.Host(rabbitMqHost, h =>
+        {
+            h.Username(rabbitMqUsername);
+            h.Password(rabbitMqPassword);
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // Configure CORS to allow communication from HouseService
 builder.Services.AddCors(options =>

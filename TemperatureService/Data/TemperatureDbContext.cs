@@ -70,17 +70,17 @@ namespace TemperatureService.Data
         {
             // Seed Houses
             modelBuilder.Entity<House>().HasData(
-                new House { HouseId = 1, Name = "Family Home", Area = 150.5 },
-                new House { HouseId = 2, Name = "Vacation House", Area = 85.2 }
+                new House { HouseId = 1, Name = "Family Home", Address = "123 Main Street", Area = 150.5m },
+                new House { HouseId = 2, Name = "Vacation House", Address = "456 Beach Avenue", Area = 85.2m }
             );
 
             // Seed Rooms
             modelBuilder.Entity<Room>().HasData(
-                new Room { RoomId = 1, HouseId = 1, Area = 25.0, Placement = "Living Room" },
-                new Room { RoomId = 2, HouseId = 1, Area = 15.5, Placement = "Bedroom" },
-                new Room { RoomId = 3, HouseId = 1, Area = 12.0, Placement = "Kitchen" },
-                new Room { RoomId = 4, HouseId = 2, Area = 20.0, Placement = "Living Room" },
-                new Room { RoomId = 5, HouseId = 2, Area = 18.0, Placement = "Bedroom" }
+                new Room { RoomId = 1, HouseId = 1, Name = "Living Room", Type = "Living", Area = 25.0m, Placement = "Living Room" },
+                new Room { RoomId = 2, HouseId = 1, Name = "Master Bedroom", Type = "Bedroom", Area = 15.5m, Placement = "Bedroom" },
+                new Room { RoomId = 3, HouseId = 1, Name = "Kitchen", Type = "Kitchen", Area = 12.0m, Placement = "Kitchen" },
+                new Room { RoomId = 4, HouseId = 2, Name = "Living Room", Type = "Living", Area = 20.0m, Placement = "Living Room" },
+                new Room { RoomId = 5, HouseId = 2, Name = "Guest Bedroom", Type = "Bedroom", Area = 18.0m, Placement = "Bedroom" }
             );
 
             // Seed Temperature data

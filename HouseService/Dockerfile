@@ -10,16 +10,28 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["HouseService.csproj", "."]
-RUN dotnet restore "./HouseService.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "./HouseService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# Copy shared contracts project
+COPY ["MessageContracts/MessageContracts.csproj", "MessageContracts/"]
+
+# Copy service project
+COPY ["HouseService/HouseService.csproj", "HouseService/"]
+
+# Restore dependencies
+RUN dotnet restore "HouseService/HouseService.csproj"
+
+# Copy all source code
+COPY MessageContracts/ MessageContracts/
+COPY HouseService/ HouseService/
+
+# Build the projects
+WORKDIR "/src/HouseService"
+RUN dotnet build "HouseService.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./HouseService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "HouseService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final

@@ -156,14 +156,14 @@ namespace TemperatureService.Controllers
     {
         public int HouseId { get; set; }
         public string Name { get; set; }
-        public double Area { get; set; }
+        public decimal Area { get; set; }
     }
 
     public class RoomDto
     {
         public int RoomId { get; set; }
         public int HouseId { get; set; }
-        public double Area { get; set; }
+        public decimal Area { get; set; }
         public string Placement { get; set; }
     }
 
