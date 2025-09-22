@@ -1,4 +1,4 @@
-namespace TemperatureService
+namespace TemperatureService.Models
 {
     public class Temperature
     {

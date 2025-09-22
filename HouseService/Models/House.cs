@@ -1,4 +1,4 @@
-namespace TemperatureService.Entities
+namespace HouseService.Models
 {
     public class House
     {
@@ -7,8 +7,5 @@ namespace TemperatureService.Entities
         public string Name { get; set; } = string.Empty;
 
         public double Area { get; set; }
-
-        // Navigation property for related rooms
-        public List<Room> Rooms { get; set; } = new List<Room>();
     }
 }

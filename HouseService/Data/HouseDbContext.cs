@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using HouseService.Models;
 
 namespace HouseService.Data
 {

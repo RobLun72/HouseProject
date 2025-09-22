@@ -1,4 +1,4 @@
-namespace TemperatureService.Entities
+namespace TemperatureService.Models
 {
     public class Room
     {

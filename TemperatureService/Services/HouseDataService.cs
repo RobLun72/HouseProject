@@ -1,4 +1,4 @@
-using TemperatureService.Entities;
+using TemperatureService.Models;
 using TemperatureService.Data;
 using Microsoft.EntityFrameworkCore;
 
