@@ -1,0 +1,135 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using HouseService.Services;
+using HouseService.Data;
+
+namespace HouseService.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class RoomController : ControllerBase
+    {
+        private readonly HouseDbContext _context;
+        private readonly ILogger<RoomController> _logger;
+        private readonly INotificationService _notificationService;
+
+        public RoomController(HouseDbContext context, ILogger<RoomController> logger, INotificationService notificationService)
+        {
+            _context = context;
+            _logger = logger;
+            _notificationService = notificationService;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
+        {
+            return Ok(await _context.Rooms.ToListAsync());
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Room>> GetRoom(int id)
+        {
+            var room = await _context.Rooms.FindAsync(id);
+            if (room == null)
+            {
+                return NotFound();
+            }
+            return Ok(room);
+        }
+
+        [HttpGet("house/{houseId}")]
+        public async Task<ActionResult<IEnumerable<Room>>> GetRoomsByHouse(int houseId)
+        {
+            var rooms = await _context.Rooms
+                .Where(r => r.HouseId == houseId)
+                .ToListAsync();
+            return Ok(rooms);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Room>> CreateRoom(Room room)
+        {
+            if (room == null)
+            {
+                return BadRequest();
+            }
+
+            // Verify the house exists
+            var house = await _context.Houses.FindAsync(room.HouseId);
+            if (house == null)
+            {
+                return BadRequest("House not found");
+            }
+
+            _context.Rooms.Add(room);
+            await _context.SaveChangesAsync();
+            
+            // Notify TemperatureService about the new room
+            await _notificationService.NotifyRoomCreatedAsync(room);
+            
+            return CreatedAtAction(nameof(GetRoom), new { id = room.RoomId }, room);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateRoom(int id, Room room)
+        {
+            if (id != room.RoomId)
+            {
+                return BadRequest();
+            }
+
+            // Verify the house exists
+            var house = await _context.Houses.FindAsync(room.HouseId);
+            if (house == null)
+            {
+                return BadRequest("House not found");
+            }
+
+            _context.Entry(room).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                
+                // Notify TemperatureService about the updated room
+                await _notificationService.NotifyRoomUpdatedAsync(room);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await RoomExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRoom(int id)
+        {
+            var room = await _context.Rooms.FindAsync(id);
+            if (room == null)
+            {
+                return NotFound();
+            }
+
+            _context.Rooms.Remove(room);
+            await _context.SaveChangesAsync();
+            
+            // Notify TemperatureService about the deleted room
+            await _notificationService.NotifyRoomDeletedAsync(id);
+            
+            return NoContent();
+        }
+
+        private async Task<bool> RoomExists(int id)
+        {
+            return await _context.Rooms.AnyAsync(e => e.RoomId == id);
+        }
+    }
+}
