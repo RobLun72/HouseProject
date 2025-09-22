@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: temperature-postgres
+    environment:
+      POSTGRES_DB: temperaturedb
+      POSTGRES_USER: tempuser
+      POSTGRES_PASSWORD: temppass123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - temperature-network
+
+  house-postgres:
+    image: postgres:15
+    container_name: house-postgres
+    environment:
+      POSTGRES_DB: housedb
+      POSTGRES_USER: houseuser
+      POSTGRES_PASSWORD: housepass123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5434:5432"
+    volumes:
+      - house_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - house-network
+
+  temperature-service:
+    build:
+      context: ./TemperatureService
+      dockerfile: Dockerfile
+    container_name: temperature-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_HTTPS_PORT=
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=temperaturedb;Username=tempuser;Password=temppass123;
+      - Services__HouseService__BaseUrl=http://house-service:80
+    ports:
+      - "5002:80"
+    depends_on:
+      - postgres
+    networks:
+      - temperature-network
+    restart: unless-stopped
+
+  house-service:
+    build:
+      context: ./HouseService
+      dockerfile: Dockerfile
+    container_name: house-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_HTTPS_PORT=
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ConnectionStrings__DefaultConnection=Host=house-postgres;Port=5432;Database=housedb;Username=houseuser;Password=housepass123;
+      - Services__TemperatureService__BaseUrl=http://temperature-service:80
+    ports:
+      - "5001:80"
+    depends_on:
+      - house-postgres
+    networks:
+      - house-network
+      - temperature-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  house_postgres_data:
+
+networks:
+  temperature-network:
+    driver: bridge
+  house-network:
+    driver: bridge
