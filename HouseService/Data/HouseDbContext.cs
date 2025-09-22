@@ -49,17 +49,17 @@ namespace HouseService.Data
         {
             // Seed Houses
             modelBuilder.Entity<House>().HasData(
-                new House { HouseId = 1, Name = "Modern Villa", Area = 250.5 },
-                new House { HouseId = 2, Name = "Cozy Apartment", Area = 85.0 },
-                new House { HouseId = 3, Name = "Family Home", Area = 180.7 }
+                new House { HouseId = 1, Name = "Modern Villa", Address = "123 Elm Street", Area = 250.5m },
+                new House { HouseId = 2, Name = "Cozy Apartment", Address = "456 Oak Avenue", Area = 85.0m },
+                new House { HouseId = 3, Name = "Family Home", Address = "789 Pine Road", Area = 180.7m }
             );
 
             // Seed Rooms
             modelBuilder.Entity<Room>().HasData(
-                new Room { RoomId = 1, HouseId = 1, Area = 25.5, Placement = "Ground Floor" },
-                new Room { RoomId = 2, HouseId = 1, Area = 30.0, Placement = "First Floor" },
-                new Room { RoomId = 3, HouseId = 2, Area = 15.5, Placement = "Main Level" },
-                new Room { RoomId = 4, HouseId = 3, Area = 20.7, Placement = "Second Floor" }
+                new Room { RoomId = 1, HouseId = 1, Name = "Living Room", Type = "Living", Area = 25.5m, Placement = "Ground Floor" },
+                new Room { RoomId = 2, HouseId = 1, Name = "Master Bedroom", Type = "Bedroom", Area = 30.0m, Placement = "First Floor" },
+                new Room { RoomId = 3, HouseId = 2, Name = "Kitchen", Type = "Kitchen", Area = 15.5m, Placement = "Main Level" },
+                new Room { RoomId = 4, HouseId = 3, Name = "Office", Type = "Office", Area = 20.7m, Placement = "Second Floor" }
             );
         }
     }

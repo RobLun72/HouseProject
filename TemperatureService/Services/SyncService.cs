@@ -65,7 +65,7 @@ namespace TemperatureService.Services
                     {
                         HouseId = houseData.HouseId,
                         Name = houseData.Name,
-                        Area = houseData.Area
+                        Area = (decimal)houseData.Area
                     };
 
                     var existingHouse = await _houseDataService.GetHouseAsync(houseData.HouseId);

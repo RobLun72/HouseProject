@@ -22,7 +22,7 @@ namespace TemperatureService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("TemperatureService.Entities.House", b =>
+            modelBuilder.Entity("TemperatureService.Models.House", b =>
                 {
                     b.Property<int>("HouseId")
                         .ValueGeneratedOnAdd()
@@ -30,9 +30,13 @@ namespace TemperatureService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("HouseId"));
 
-                    b.Property<double>("Area")
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Area")
                         .HasPrecision(10, 2)
-                        .HasColumnType("double precision");
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -47,18 +51,20 @@ namespace TemperatureService.Migrations
                         new
                         {
                             HouseId = 1,
-                            Area = 150.5,
+                            Address = "123 Main Street",
+                            Area = 150.5m,
                             Name = "Family Home"
                         },
                         new
                         {
                             HouseId = 2,
-                            Area = 85.200000000000003,
+                            Address = "456 Beach Avenue",
+                            Area = 85.2m,
                             Name = "Vacation House"
                         });
                 });
 
-            modelBuilder.Entity("TemperatureService.Entities.Room", b =>
+            modelBuilder.Entity("TemperatureService.Models.Room", b =>
                 {
                     b.Property<int>("RoomId")
                         .ValueGeneratedOnAdd()
@@ -66,17 +72,25 @@ namespace TemperatureService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoomId"));
 
-                    b.Property<double>("Area")
+                    b.Property<decimal>("Area")
                         .HasPrecision(10, 2)
-                        .HasColumnType("double precision");
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<int>("HouseId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Placement")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("RoomId");
 
@@ -88,41 +102,51 @@ namespace TemperatureService.Migrations
                         new
                         {
                             RoomId = 1,
-                            Area = 25.0,
+                            Area = 25.0m,
                             HouseId = 1,
-                            Placement = "Living Room"
+                            Name = "Living Room",
+                            Placement = "Living Room",
+                            Type = "Living"
                         },
                         new
                         {
                             RoomId = 2,
-                            Area = 15.5,
+                            Area = 15.5m,
                             HouseId = 1,
-                            Placement = "Bedroom"
+                            Name = "Master Bedroom",
+                            Placement = "Bedroom",
+                            Type = "Bedroom"
                         },
                         new
                         {
                             RoomId = 3,
-                            Area = 12.0,
+                            Area = 12.0m,
                             HouseId = 1,
-                            Placement = "Kitchen"
+                            Name = "Kitchen",
+                            Placement = "Kitchen",
+                            Type = "Kitchen"
                         },
                         new
                         {
                             RoomId = 4,
-                            Area = 20.0,
+                            Area = 20.0m,
                             HouseId = 2,
-                            Placement = "Living Room"
+                            Name = "Living Room",
+                            Placement = "Living Room",
+                            Type = "Living"
                         },
                         new
                         {
                             RoomId = 5,
-                            Area = 18.0,
+                            Area = 18.0m,
                             HouseId = 2,
-                            Placement = "Bedroom"
+                            Name = "Guest Bedroom",
+                            Placement = "Bedroom",
+                            Type = "Bedroom"
                         });
                 });
 
-            modelBuilder.Entity("TemperatureService.Temperature", b =>
+            modelBuilder.Entity("TemperatureService.Models.Temperature", b =>
                 {
                     b.Property<int>("TempId")
                         .ValueGeneratedOnAdd()
@@ -201,9 +225,9 @@ namespace TemperatureService.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TemperatureService.Entities.Room", b =>
+            modelBuilder.Entity("TemperatureService.Models.Room", b =>
                 {
-                    b.HasOne("TemperatureService.Entities.House", "House")
+                    b.HasOne("TemperatureService.Models.House", "House")
                         .WithMany("Rooms")
                         .HasForeignKey("HouseId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -212,21 +236,21 @@ namespace TemperatureService.Migrations
                     b.Navigation("House");
                 });
 
-            modelBuilder.Entity("TemperatureService.Temperature", b =>
+            modelBuilder.Entity("TemperatureService.Models.Temperature", b =>
                 {
-                    b.HasOne("TemperatureService.Entities.Room", null)
+                    b.HasOne("TemperatureService.Models.Room", null)
                         .WithMany("Temperatures")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("TemperatureService.Entities.House", b =>
+            modelBuilder.Entity("TemperatureService.Models.House", b =>
                 {
                     b.Navigation("Rooms");
                 });
 
-            modelBuilder.Entity("TemperatureService.Entities.Room", b =>
+            modelBuilder.Entity("TemperatureService.Models.Room", b =>
                 {
                     b.Navigation("Temperatures");
                 });

@@ -36,8 +36,8 @@ services:
 
   temperature-service:
     build:
-      context: ./TemperatureService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./TemperatureService/Dockerfile
     container_name: temperature-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
@@ -47,19 +47,38 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=
       - DOTNET_RUNNING_IN_CONTAINER=true
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=temperaturedb;Username=tempuser;Password=temppass123;
-      - Services__HouseService__BaseUrl=http://house-service:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
     ports:
       - "5002:80"
     depends_on:
       - postgres
+      - rabbitmq
     networks:
       - temperature-network
+      - messaging-network
     restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: house-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672" # AMQP port
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+    networks:
+      - messaging-network
 
   house-service:
     build:
-      context: ./HouseService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./HouseService/Dockerfile
     container_name: house-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
@@ -69,22 +88,28 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=
       - DOTNET_RUNNING_IN_CONTAINER=true
       - ConnectionStrings__DefaultConnection=Host=house-postgres;Port=5432;Database=housedb;Username=houseuser;Password=housepass123;
-      - Services__TemperatureService__BaseUrl=http://temperature-service:80
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
     ports:
       - "5001:80"
     depends_on:
       - house-postgres
+      - rabbitmq
     networks:
       - house-network
-      - temperature-network
+      - messaging-network
     restart: unless-stopped
 
 volumes:
   postgres_data:
   house_postgres_data:
+  rabbitmq_data:
 
 networks:
   temperature-network:
     driver: bridge
   house-network:
+    driver: bridge
+  messaging-network:
     driver: bridge

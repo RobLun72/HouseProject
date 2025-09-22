@@ -1,6 +1,8 @@
 using HouseService.Services;
 using HouseService.Data;
 using Microsoft.EntityFrameworkCore;
+using MassTransit;
+using MessageContracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,8 +23,25 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<HouseDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register NotificationService with HttpClient
-builder.Services.AddHttpClient<INotificationService, NotificationService>();
+// Register Message Publisher
+builder.Services.AddScoped<IMessagePublisher, MessagePublisher>();
+
+// Configure MassTransit with RabbitMQ
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitMqHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+        var rabbitMqUsername = builder.Configuration["RabbitMQ:Username"] ?? "admin";
+        var rabbitMqPassword = builder.Configuration["RabbitMQ:Password"] ?? "admin123";
+
+        cfg.Host(rabbitMqHost, h =>
+        {
+            h.Username(rabbitMqUsername);
+            h.Password(rabbitMqPassword);
+        });
+    });
+});
 
 var app = builder.Build();
 

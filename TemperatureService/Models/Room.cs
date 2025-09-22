@@ -6,9 +6,13 @@ namespace TemperatureService.Models
 
         public int HouseId { get; set; }
 
-        public double Area { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public string Placement { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+
+        public decimal Area { get; set; }
+
+        public string Placement { get; set; } = string.Empty; // Keeping for backward compatibility
 
         // Navigation property
         public House? House { get; set; }

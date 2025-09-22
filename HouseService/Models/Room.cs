@@ -6,8 +6,13 @@ namespace HouseService.Models
 
         public int HouseId { get; set; }
 
-        public double Area { get; set; }
+        public string Name { get; set; } = string.Empty;
 
+        public string Type { get; set; } = string.Empty;
+
+        public decimal Area { get; set; }
+
+        // Keeping Placement for backward compatibility if needed
         public string Placement { get; set; } = string.Empty;
     }
 }

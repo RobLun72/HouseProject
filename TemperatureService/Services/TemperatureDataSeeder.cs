@@ -30,8 +30,8 @@ namespace TemperatureService.Services
                 return;
             }
 
-            var startDate = DateTime.UtcNow.Date.AddDays(-30); // Last 30 days
-            var endDate = DateTime.UtcNow.Date;
+            var startDate = DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(-30), DateTimeKind.Utc); // Last 30 days
+            var endDate = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
 
             var random = new Random();
             var temperaturesToAdd = new List<Temperature>();
@@ -47,7 +47,7 @@ namespace TemperatureService.Services
                     {
                         // Check if temperature already exists
                         var exists = await _context.Temperatures
-                            .AnyAsync(t => t.RoomId == room.RoomId && t.Hour == hour && t.Date.Date == date);
+                            .AnyAsync(t => t.RoomId == room.RoomId && t.Hour == hour && t.Date.Date == date.Date);
 
                         if (!exists)
                         {
@@ -59,7 +59,7 @@ namespace TemperatureService.Services
                             {
                                 RoomId = room.RoomId,
                                 Hour = hour,
-                                Date = date,
+                                Date = DateTime.SpecifyKind(date, DateTimeKind.Utc),
                                 Degrees = Math.Round(baseTemp + variation + seasonalAdjustment, 1)
                             };
 
@@ -83,21 +83,28 @@ namespace TemperatureService.Services
 
         public async Task UpdateExistingRecordsWithDatesAsync()
         {
-            var existingRecords = await _context.Temperatures
-                .Where(t => t.Date == DateTime.MinValue || t.Date.Year == 1)
-                .ToListAsync();
-
-            if (existingRecords.Any())
+            try
             {
-                var baseDate = DateTime.UtcNow.Date.AddDays(-7); // Set to a week ago
-                
-                for (int i = 0; i < existingRecords.Count; i++)
-                {
-                    existingRecords[i].Date = baseDate.AddDays(i % 7); // Spread across the last week
-                }
+                var existingRecords = await _context.Temperatures
+                    .Where(t => t.Date == DateTime.MinValue || t.Date.Year == 1)
+                    .ToListAsync();
 
-                await _context.SaveChangesAsync();
-                _logger.LogInformation($"Updated {existingRecords.Count} existing temperature records with meaningful dates");
+                if (existingRecords.Any())
+                {
+                    var baseDate = DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(-7), DateTimeKind.Utc); // Set to a week ago
+                    
+                    for (int i = 0; i < existingRecords.Count; i++)
+                    {
+                        existingRecords[i].Date = DateTime.SpecifyKind(baseDate.AddDays(i % 7), DateTimeKind.Utc); // Spread across the last week
+                    }
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Updated {existingRecords.Count} existing temperature records with meaningful dates");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not update existing temperature records. This is normal for new databases.");
             }
         }
 

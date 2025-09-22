@@ -6,7 +6,9 @@ namespace TemperatureService.Models
 
         public string Name { get; set; } = string.Empty;
 
-        public double Area { get; set; }
+        public string Address { get; set; } = string.Empty;
+
+        public decimal Area { get; set; }
 
         // Navigation property for related rooms
         public List<Room> Rooms { get; set; } = new List<Room>();
