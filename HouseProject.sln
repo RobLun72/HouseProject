@@ -1,10 +1,12 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService", "HouseService\HouseService.csproj", "{8946CB50-48D4-4811-831A-E1DFD8421C8F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemperatureService", "TemperatureService\TemperatureService.csproj", "{9A57DB70-58E5-4922-942B-F2E8F9C64D9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService.Tests", "HouseService.Tests\HouseService.Tests.csproj", "{8C623613-36F4-4234-8682-5818186B6C4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +22,10 @@ Global
 		{9A57DB70-58E5-4922-942B-F2E8F9C64D9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A57DB70-58E5-4922-942B-F2E8F9C64D9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A57DB70-58E5-4922-942B-F2E8F9C64D9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C623613-36F4-4234-8682-5818186B6C4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C623613-36F4-4234-8682-5818186B6C4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C623613-36F4-4234-8682-5818186B6C4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C623613-36F4-4234-8682-5818186B6C4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
