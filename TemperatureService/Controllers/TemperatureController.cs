@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TemperatureService.Data;
 using TemperatureService.Models;
+using TemperatureService.Attributes;
 
 namespace TemperatureService.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [ApiKeyAuth]
     public class TemperatureController : ControllerBase
     {
         private readonly TemperatureDbContext _context;

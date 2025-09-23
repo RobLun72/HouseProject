@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using HouseService.Services;
 using HouseService.Data;
 using HouseService.Models;
+using HouseService.Attributes;
 
 namespace HouseService.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [ApiKeyAuth]
     public class HouseController : ControllerBase
     {
         private readonly HouseDbContext _context;

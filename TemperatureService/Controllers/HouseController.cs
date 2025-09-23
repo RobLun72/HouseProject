@@ -3,11 +3,13 @@ using TemperatureService.Models;
 using TemperatureService.Services;
 using TemperatureService.Data;
 using Microsoft.EntityFrameworkCore;
+using TemperatureService.Attributes;
 
 namespace TemperatureService.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [ApiKeyAuth]
     public class HouseController : ControllerBase
     {
         private readonly IHouseDataService _houseDataService;
