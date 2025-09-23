@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using TemperatureService.Models;
 using TemperatureService.Services;
+using TemperatureService.Attributes;
 
 namespace TemperatureService.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [ApiKeyAuth]
     public class SyncController : ControllerBase
     {
         private readonly ISyncService _syncService;
