@@ -136,16 +136,8 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
     app.UseSwaggerUI();
 }
 
-// Only use HTTPS redirection when not running in Docker container
-if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")))
-{
-    // Running in Docker - skip HTTPS redirection
-    app.Logger.LogInformation("Running in Docker container - skipping HTTPS redirection");
-}
-else
-{
-    app.UseHttpsRedirection();
-}
+// Use HTTPS redirection (now that we have certificates even in Docker)
+app.UseHttpsRedirection();
 
 app.UseCors("AllowHouseService");
 
