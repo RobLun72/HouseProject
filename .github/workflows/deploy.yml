@@ -1,0 +1,212 @@
+name: Deploy HouseProject to Azure
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_RESOURCE_GROUP_DEV: rg-houseproject-dev
+  AZURE_RESOURCE_GROUP_PROD: rg-houseproject-prod
+  AZURE_LOCATION: eastus
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Run Tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test HouseService
+        run: dotnet test HouseService.Tests --no-build --configuration Release --verbosity normal
+
+      - name: Test TemperatureService
+        run: dotnet test TemperatureService.Tests --no-build --configuration Release --verbosity normal
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    name: Build and Push Container Images
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "resource_group=${{ env.AZURE_RESOURCE_GROUP_PROD }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "resource_group=${{ env.AZURE_RESOURCE_GROUP_DEV }}" >> $GITHUB_OUTPUT
+          fi
+          echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container Registry details
+        id: registry
+        run: |
+          # Get container registry name from the resource group
+          REGISTRY_NAME=$(az acr list --resource-group ${{ steps.env.outputs.resource_group }} --query '[0].name' --output tsv 2>/dev/null || echo "")
+          if [ -z "$REGISTRY_NAME" ]; then
+            echo "No container registry found. Infrastructure may not be deployed yet."
+            exit 1
+          fi
+          REGISTRY_SERVER=$(az acr show --name $REGISTRY_NAME --resource-group ${{ steps.env.outputs.resource_group }} --query 'loginServer' --output tsv)
+          echo "registry_name=$REGISTRY_NAME" >> $GITHUB_OUTPUT
+          echo "registry_server=$REGISTRY_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Login to Container Registry
+        run: |
+          az acr login --name ${{ steps.registry.outputs.registry_name }}
+
+      - name: Build and push HouseService image
+        run: |
+          docker build -t ${{ steps.registry.outputs.registry_server }}/houseservice:${{ steps.env.outputs.image_tag }} \
+            -t ${{ steps.registry.outputs.registry_server }}/houseservice:latest \
+            -f HouseService/Dockerfile .
+          docker push ${{ steps.registry.outputs.registry_server }}/houseservice:${{ steps.env.outputs.image_tag }}
+          docker push ${{ steps.registry.outputs.registry_server }}/houseservice:latest
+
+      - name: Build and push TemperatureService image
+        run: |
+          docker build -t ${{ steps.registry.outputs.registry_server }}/temperatureservice:${{ steps.env.outputs.image_tag }} \
+            -t ${{ steps.registry.outputs.registry_server }}/temperatureservice:latest \
+            -f TemperatureService/Dockerfile .
+          docker push ${{ steps.registry.outputs.registry_server }}/temperatureservice:${{ steps.env.outputs.image_tag }}
+          docker push ${{ steps.registry.outputs.registry_server }}/temperatureservice:latest
+
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      resource_group: ${{ steps.env.outputs.resource_group }}
+      image_tag: ${{ steps.env.outputs.image_tag }}
+      registry_server: ${{ steps.registry.outputs.registry_server }}
+
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    name: Deploy Infrastructure
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy infrastructure
+        run: |
+          cd infrastructure
+          chmod +x deploy.sh
+
+          # Set secrets for production deployment
+          if [[ "${{ needs.build-and-push.outputs.environment }}" == "prod" ]]; then
+            export POSTGRES_ADMIN_PASSWORD="${{ secrets.POSTGRES_ADMIN_PASSWORD }}"
+            export API_KEYS="${{ secrets.API_KEYS }}"
+          fi
+
+          ./deploy.sh ${{ needs.build-and-push.outputs.environment }} ${{ needs.build-and-push.outputs.resource_group }}
+
+      - name: Upload deployment outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-outputs-${{ needs.build-and-push.outputs.environment }}
+          path: infrastructure/deployment-outputs.json
+
+  deploy-applications:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-infrastructure]
+    name: Deploy Applications
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Download deployment outputs
+        uses: actions/download-artifact@v3
+        with:
+          name: deployment-outputs-${{ needs.build-and-push.outputs.environment }}
+          path: infrastructure/
+
+      - name: Deploy applications
+        run: |
+          cd infrastructure
+          chmod +x deploy-apps.sh
+
+          # Set secrets for production deployment
+          if [[ "${{ needs.build-and-push.outputs.environment }}" == "prod" ]]; then
+            export POSTGRES_ADMIN_PASSWORD="${{ secrets.POSTGRES_ADMIN_PASSWORD }}"
+            export API_KEYS="${{ secrets.API_KEYS }}"
+          fi
+
+          ./deploy-apps.sh ${{ needs.build-and-push.outputs.environment }} ${{ needs.build-and-push.outputs.image_tag }}
+
+      - name: Get application URLs
+        id: urls
+        run: |
+          cd infrastructure
+          DEPLOYMENT_NAME=$(az deployment group list --resource-group ${{ needs.build-and-push.outputs.resource_group }} --query '[?contains(name, `apps-deployment`)].name | sort(@) | [-1]' --output tsv)
+
+          HOUSE_URL=$(az deployment group show \
+            --resource-group ${{ needs.build-and-push.outputs.resource_group }} \
+            --name $DEPLOYMENT_NAME \
+            --query 'properties.outputs.houseServiceUrl.value' \
+            --output tsv)
+
+          TEMP_URL=$(az deployment group show \
+            --resource-group ${{ needs.build-and-push.outputs.resource_group }} \
+            --name $DEPLOYMENT_NAME \
+            --query 'properties.outputs.temperatureServiceUrl.value' \
+            --output tsv)
+
+          echo "house_service_url=$HOUSE_URL" >> $GITHUB_OUTPUT
+          echo "temperature_service_url=$TEMP_URL" >> $GITHUB_OUTPUT
+
+      - name: Test deployment
+        run: |
+          echo "Testing HouseService at: ${{ steps.urls.outputs.house_service_url }}"
+          curl -f ${{ steps.urls.outputs.house_service_url }}/api/health || echo "Health check failed"
+
+          echo "Testing TemperatureService at: ${{ steps.urls.outputs.temperature_service_url }}"
+          curl -f ${{ steps.urls.outputs.temperature_service_url }}/api/health || echo "Health check failed"
+
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.build-and-push.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** ${{ needs.build-and-push.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Resource Group:** ${{ needs.build-and-push.outputs.resource_group }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Service URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **HouseService:** ${{ steps.urls.outputs.house_service_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **TemperatureService:** ${{ steps.urls.outputs.temperature_service_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Container Images" >> $GITHUB_STEP_SUMMARY
+          echo "- **HouseService:** ${{ needs.build-and-push.outputs.registry_server }}/houseservice:${{ needs.build-and-push.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **TemperatureService:** ${{ needs.build-and-push.outputs.registry_server }}/temperatureservice:${{ needs.build-and-push.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
