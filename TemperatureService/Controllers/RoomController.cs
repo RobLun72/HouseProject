@@ -86,9 +86,9 @@ namespace TemperatureService.Controllers
 
     public class HouseRoomTempResult
     {
-        public HouseDto House { get; set; }
-        public RoomDto Room { get; set; }
+        public required HouseDto House { get; set; }
+        public required RoomDto Room { get; set; }
         public DateTime Date { get; set; }
-        public List<TemperatureDto> Temperatures { get; set; }
+        public required List<TemperatureDto> Temperatures { get; set; }
     }
 }

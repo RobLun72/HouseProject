@@ -132,32 +132,32 @@ namespace TemperatureService.Controllers
 
     public class HouseTempDataResult
     {
-        public HouseDto House { get; set; }
+        public required HouseDto House { get; set; }
         public DateTime Date { get; set; }
-        public List<RoomTempData> Rooms { get; set; }
+        public required List<RoomTempData> Rooms { get; set; }
     }
 
     public class HouseRoomsResult
     {
-        public HouseDto House { get; set; }
-        public List<RoomDto> Rooms { get; set; }
+        public required HouseDto House { get; set; }
+        public required List<RoomDto> Rooms { get; set; }
     }
 
     public class HousesResult
     {
-        public List<HouseDto> Houses { get; set; }
+        public required List<HouseDto> Houses { get; set; }
     }
 
     public class RoomTempData
     {
-        public RoomDto Room { get; set; }
-        public List<TemperatureDto> Temperatures { get; set; }
+        public required RoomDto Room { get; set; }
+        public required List<TemperatureDto> Temperatures { get; set; }
     }
 
     public class HouseDto
     {
         public int HouseId { get; set; }
-        public string Name { get; set; }
+        public required string Name { get; set; }
         public decimal Area { get; set; }
     }
 
@@ -166,7 +166,7 @@ namespace TemperatureService.Controllers
         public int RoomId { get; set; }
         public int HouseId { get; set; }
         public decimal Area { get; set; }
-        public string Placement { get; set; }
+        public required string Placement { get; set; }
     }
 
     public class TemperatureDto
