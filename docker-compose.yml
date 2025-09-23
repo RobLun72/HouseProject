@@ -41,17 +41,20 @@ services:
     container_name: temperature-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ASPNETCORE_URLS=http://+:80
-      - ASPNETCORE_HTTPS_PORT=
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=crypticpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_HTTPS_PORT=443
       - DOTNET_RUNNING_IN_CONTAINER=true
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=temperaturedb;Username=tempuser;Password=temppass123;
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin123
     ports:
-      - "5002:80"
+      - "7002:443"
+      # HTTP port for internal redirects only - not exposed externally
+    volumes:
+      - ~/.aspnet/https:/https:ro
     depends_on:
       - postgres
       - rabbitmq
@@ -82,17 +85,20 @@ services:
     container_name: house-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ASPNETCORE_URLS=http://+:80
-      - ASPNETCORE_HTTPS_PORT=
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=crypticpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_HTTPS_PORT=443
       - DOTNET_RUNNING_IN_CONTAINER=true
       - ConnectionStrings__DefaultConnection=Host=house-postgres;Port=5432;Database=housedb;Username=houseuser;Password=housepass123;
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=admin
       - RabbitMQ__Password=admin123
     ports:
-      - "5001:80"
+      - "7001:443"
+      # HTTP port for internal redirects only - not exposed externally
+    volumes:
+      - ~/.aspnet/https:/https:ro
     depends_on:
       - house-postgres
       - rabbitmq
