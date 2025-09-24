@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { HouseTable } from "./houseTable";
 
 // TypeScript interfaces matching the HouseService API
-interface House {
+export interface House {
   houseId: number;
   name: string;
   address: string;
@@ -74,8 +75,24 @@ export function House() {
     }
   }, [pageState.loading, pageState.houses.length, pageState.error]);
 
+  // Handler functions for the HouseTable component
+  const handleAdd = () => {
+    console.log("Add house clicked");
+    // TODO: Implement add house functionality
+  };
+
+  const handleEdit = (houseId: number) => {
+    console.log("Edit house:", houseId);
+    // TODO: Implement edit house functionality
+  };
+
+  const handleDelete = (houseId: number) => {
+    console.log("Delete house:", houseId);
+    // TODO: Implement delete house functionality
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-w-sm max-w-md md:min-w-3xl md:max-w-7xl px-4 py-8">
       <h2 className="text-center text-3xl font-bold mb-6">Houses</h2>
 
       {pageState.loading && (
@@ -97,22 +114,14 @@ export function House() {
         )}
 
       {!pageState.loading && pageState.houses.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {pageState.houses.map((house) => (
-            <div
-              key={house.houseId}
-              className="bg-white shadow-md rounded-lg p-6 border"
-            >
-              <h3 className="text-xl font-semibold mb-2">{house.name}</h3>
-              <p className="text-gray-600 mb-2">
-                <span className="font-medium">Address:</span> {house.address}
-              </p>
-              <p className="text-gray-600">
-                <span className="font-medium">Area:</span> {house.area} sq ft
-              </p>
-            </div>
-          ))}
-        </div>
+        <HouseTable
+          lists={pageState.houses}
+          onAdd={handleAdd}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onUp={() => {}} // Not used but required by interface
+          onDown={() => {}} // Not used but required by interface
+        />
       )}
     </div>
   );

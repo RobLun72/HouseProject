@@ -1,4 +1,4 @@
-import { House } from "@/pages/house";
+import { House } from "@/pages/House/house";
 import type { FunctionComponent } from "react";
 import { Route, Routes } from "react-router-dom";
 
