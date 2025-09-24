@@ -80,6 +80,18 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+// Configure CORS to allow frontend access
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173") // Vite dev server (both HTTP and HTTPS)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Allow credentials for secure communication
+    });
+});
+
 var app = builder.Build();
 
 // Ensure database is created and migrated
@@ -103,6 +115,9 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Use CORS policy BEFORE other middleware
+app.UseCors("AllowFrontend");
 
 // Use HTTPS redirection (now that we have certificates even in Docker)
 app.UseHttpsRedirection();
