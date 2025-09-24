@@ -93,17 +93,6 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-// Configure CORS to allow communication from HouseService
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowHouseService", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
-
 var app = builder.Build();
 
 // Ensure database is created and migrated
@@ -138,8 +127,6 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
 
 // Use HTTPS redirection (now that we have certificates even in Docker)
 app.UseHttpsRedirection();
-
-app.UseCors("AllowHouseService");
 
 app.UseAuthorization();
 

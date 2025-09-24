@@ -1,3 +1,7 @@
+-- Fix HouseService Database Schema
+-- This script manually applies schema changes and data updates for HouseService database
+-- Use this when Entity Framework migrations need manual intervention
+
 -- Add Address column to Houses table
 ALTER TABLE "Houses" ADD COLUMN "Address" text NOT NULL DEFAULT '';
 
