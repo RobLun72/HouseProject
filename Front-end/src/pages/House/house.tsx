@@ -180,7 +180,7 @@ export function House() {
 
   return (
     <div className="min-w-sm max-w-md md:min-w-3xl md:max-w-7xl px-4 py-8">
-      <h2 className="text-center text-3xl font-bold mb-6">Houses</h2>
+      <h1 className="text-3xl font-bold mb-8">Houses</h1>
 
       {pageState.loading && (
         <div className="flex justify-center">

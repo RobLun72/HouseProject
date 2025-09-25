@@ -85,7 +85,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173") // Vite dev server (both HTTP and HTTPS)
+        policy.WithOrigins(
+                "http://localhost:5173", "https://localhost:5173", // Vite dev server default port
+                "http://localhost:5174", "https://localhost:5174"  // Vite dev server alternate port
+              )
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // Allow credentials for secure communication

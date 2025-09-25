@@ -51,6 +51,8 @@ namespace TemperatureService.Controllers
                     {
                         RoomId = room.RoomId,
                         HouseId = room.HouseId,
+                        Name = room.Name,
+                        Type = room.Type,
                         Area = room.Area,
                         Placement = room.Placement
                     },
@@ -103,6 +105,8 @@ namespace TemperatureService.Controllers
                 {
                     RoomId = room.RoomId,
                     HouseId = room.HouseId,
+                    Name = room.Name,
+                    Type = room.Type,
                     Area = room.Area,
                     Placement = room.Placement
                 }).ToList()
@@ -128,53 +132,34 @@ namespace TemperatureService.Controllers
 
             return Ok(result);
         }
-    }
 
-    public class HouseTempDataResult
-    {
-        public required HouseDto House { get; set; }
-        public DateTime Date { get; set; }
-        public required List<RoomTempData> Rooms { get; set; }
-    }
+        [HttpGet("/HousesWithRooms")]
+        public async Task<ActionResult<HousesWithRoomsResult>> GetHousesWithRooms()
+        {
+            var houses = await _houseDataService.GetHousesAsync();
 
-    public class HouseRoomsResult
-    {
-        public required HouseDto House { get; set; }
-        public required List<RoomDto> Rooms { get; set; }
-    }
+            var result = new HousesWithRoomsResult
+            {
+                Houses = houses
+                    .OrderBy(h => h.Name)
+                    .Select(house => new HouseWithRoomsDto
+                    {
+                        HouseId = house.HouseId,
+                        Name = house.Name,
+                        Area = house.Area,
+                        Rooms = house.Rooms.Select(room => new RoomDto
+                        {
+                            RoomId = room.RoomId,
+                            HouseId = room.HouseId,
+                            Name = room.Name,
+                            Type = room.Type,
+                            Area = room.Area,
+                            Placement = room.Placement
+                        }).ToList()
+                    }).ToList()
+            };
 
-    public class HousesResult
-    {
-        public required List<HouseDto> Houses { get; set; }
-    }
-
-    public class RoomTempData
-    {
-        public required RoomDto Room { get; set; }
-        public required List<TemperatureDto> Temperatures { get; set; }
-    }
-
-    public class HouseDto
-    {
-        public int HouseId { get; set; }
-        public required string Name { get; set; }
-        public decimal Area { get; set; }
-    }
-
-    public class RoomDto
-    {
-        public int RoomId { get; set; }
-        public int HouseId { get; set; }
-        public decimal Area { get; set; }
-        public required string Placement { get; set; }
-    }
-
-    public class TemperatureDto
-    {
-        public int TempId { get; set; }
-        public int RoomId { get; set; }
-        public int Hour { get; set; }
-        public double Degrees { get; set; }
-        public DateTime Date { get; set; }
+            return Ok(result);
+        }
     }
 }

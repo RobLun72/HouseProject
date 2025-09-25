@@ -27,6 +27,18 @@ const components: MenuComponentProps[] = [
       },
     ],
   },
+  {
+    topMenu: "Temperature",
+    paths: ["temperature"],
+    items: [
+      {
+        title: "House Temperatures",
+        href: "/temperature",
+        path: "temperature",
+        description: "View temperatures for all houses and rooms",
+      },
+    ],
+  },
 ];
 
 export function AppMenu() {
