@@ -66,6 +66,8 @@ namespace TemperatureService.Controllers
                 {
                     RoomId = room.RoomId,
                     HouseId = room.HouseId,
+                    Name = room.Name,
+                    Type = room.Type,
                     Area = room.Area,
                     Placement = room.Placement
                 },
@@ -82,13 +84,5 @@ namespace TemperatureService.Controllers
 
             return Ok(result);
         }
-    }
-
-    public class HouseRoomTempResult
-    {
-        public required HouseDto House { get; set; }
-        public required RoomDto Room { get; set; }
-        public DateTime Date { get; set; }
-        public required List<TemperatureDto> Temperatures { get; set; }
     }
 }

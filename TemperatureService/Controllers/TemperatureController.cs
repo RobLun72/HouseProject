@@ -100,11 +100,25 @@ namespace TemperatureService.Controllers
         [HttpGet("room/{roomId}/date/{date:datetime}")]
         public async Task<ActionResult<IEnumerable<Temperature>>> GetTemperaturesByRoomAndDate(int roomId, DateTime date)
         {
-            var temperatures = await _context.Temperatures
-                .Where(t => t.RoomId == roomId && t.Date.Date == date.Date)
-                .OrderBy(t => t.Hour)
-                .ToListAsync();
-            return Ok(temperatures);
+            try
+            {
+                // Convert to UTC explicitly to avoid Npgsql timezone issues
+                var utcDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
+                var utcNextDay = DateTime.SpecifyKind(date.Date.AddDays(1), DateTimeKind.Utc);
+                
+                // Use proper UTC date range comparison
+                var temperatures = await _context.Temperatures
+                    .Where(t => t.RoomId == roomId && t.Date >= utcDate && t.Date < utcNextDay)
+                    .OrderBy(t => t.Hour)
+                    .ToListAsync();
+                
+                return Ok(temperatures);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving temperatures for room {RoomId} on date {Date}", roomId, date);
+                return StatusCode(500, new { error = "Internal server error occurred while retrieving temperature data", details = ex.Message });
+            }
         }
 
         [HttpGet("room/{roomId}/date/{date:datetime}/hour/{hour}")]
@@ -117,6 +131,28 @@ namespace TemperatureService.Controllers
                 return NotFound();
             }
             return Ok(temperature);
+        }
+
+        [HttpGet("room/{roomId}/dates")]
+        public async Task<ActionResult<IEnumerable<DateTime>>> GetAvailableDatesForRoom(int roomId)
+        {
+            try
+            {
+                // Get distinct dates where temperatures exist for the specified room
+                var availableDates = await _context.Temperatures
+                    .Where(t => t.RoomId == roomId)
+                    .Select(t => t.Date.Date) // Get only the date part
+                    .Distinct()
+                    .OrderByDescending(d => d) // Sort newest first
+                    .ToListAsync();
+                
+                return Ok(availableDates);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving available dates for room {RoomId}", roomId);
+                return StatusCode(500, new { error = "Internal server error occurred while retrieving available dates", details = ex.Message });
+            }
         }
 
         [HttpPost]
