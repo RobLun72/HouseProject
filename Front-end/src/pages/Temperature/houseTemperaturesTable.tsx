@@ -73,7 +73,7 @@ function ContextMenu({
           className="cursor-pointer"
           onClick={() => onRoomTemp(row.original.houseId, row.original.roomId)}
         >
-          View room temperatures
+          View todays temperatures
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

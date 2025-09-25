@@ -37,6 +37,12 @@ const components: MenuComponentProps[] = [
         path: "temperature",
         description: "View temperatures for all houses and rooms",
       },
+      {
+        title: "Report temperatures",
+        href: "/temperature/report",
+        path: "temperature",
+        description: "Generate temperature reports for houses and rooms",
+      },
     ],
   },
 ];

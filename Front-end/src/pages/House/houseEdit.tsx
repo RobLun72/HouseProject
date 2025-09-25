@@ -149,7 +149,7 @@ export function HouseEdit() {
           </div>
           <button
             onClick={handleCancel}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50"
+            className="px-6 py-2 border border-gray-300 text-app-primary rounded-md font-medium hover:text-app-primary-hover hover:bg-gray-50"
           >
             Back to Houses
           </button>

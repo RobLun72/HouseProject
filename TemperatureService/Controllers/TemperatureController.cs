@@ -133,6 +133,28 @@ namespace TemperatureService.Controllers
             return Ok(temperature);
         }
 
+        [HttpGet("room/{roomId}/dates")]
+        public async Task<ActionResult<IEnumerable<DateTime>>> GetAvailableDatesForRoom(int roomId)
+        {
+            try
+            {
+                // Get distinct dates where temperatures exist for the specified room
+                var availableDates = await _context.Temperatures
+                    .Where(t => t.RoomId == roomId)
+                    .Select(t => t.Date.Date) // Get only the date part
+                    .Distinct()
+                    .OrderByDescending(d => d) // Sort newest first
+                    .ToListAsync();
+                
+                return Ok(availableDates);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving available dates for room {RoomId}", roomId);
+                return StatusCode(500, new { error = "Internal server error occurred while retrieving available dates", details = ex.Message });
+            }
+        }
+
         [HttpPost]
         public async Task<ActionResult<Temperature>> CreateTemperature(CreateTemperatureRequest request)
         {

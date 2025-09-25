@@ -210,7 +210,7 @@ export function Room() {
       <div className="mb-6">
         <button
           onClick={handleBackToHouses}
-          className="mb-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 focus:outline-none"
+          className="mb-4 px-4 py-2 text-sm text-app-primary hover:text-app-primary-hover focus:outline-none"
         >
           ← Back to Houses
         </button>
@@ -231,15 +231,7 @@ export function Room() {
         </div>
       )}
 
-      {!pageState.loading &&
-        !pageState.error &&
-        pageState.rooms.length === 0 && (
-          <div className="text-center text-gray-500">
-            No rooms found for this house.
-          </div>
-        )}
-
-      {!pageState.loading && pageState.rooms.length > 0 && (
+      {!pageState.loading && !pageState.error && (
         <RoomTable
           lists={pageState.rooms}
           onAdd={handleAdd}
@@ -247,6 +239,9 @@ export function Room() {
           onDelete={handleDelete}
           onUp={() => {}} // Not used but required by interface
           onDown={() => {}} // Not used but required by interface
+          noRowsText={`No rooms found for ${
+            pageState.houseName || "this house"
+          }.`}
         />
       )}
 

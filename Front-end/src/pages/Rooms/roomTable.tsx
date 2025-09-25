@@ -23,6 +23,7 @@ export function RoomTable({
   onAdd,
   onEdit,
   onDelete,
+  noRowsText,
 }: {
   lists: Room[];
   onAdd: () => void;
@@ -30,6 +31,7 @@ export function RoomTable({
   onDelete: (index: number) => void;
   onUp: (index: number) => void;
   onDown: (index: number) => void;
+  noRowsText?: string;
 }) {
   const { isMobile } = useResponsive();
   const page = useLocation();
@@ -60,6 +62,7 @@ export function RoomTable({
       pageParams={pageParams}
       onAdd={handleAdd}
       dragDropEnabled={false}
+      noRowsText={noRowsText}
     />
   );
 }
