@@ -23,7 +23,7 @@ const components: MenuComponentProps[] = [
         title: "Show houses",
         href: "/",
         path: "",
-        description: "Presentation of the reports",
+        description: "List of all houses",
       },
     ],
   },

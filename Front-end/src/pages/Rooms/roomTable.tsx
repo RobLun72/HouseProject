@@ -15,21 +15,19 @@ import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 import { useResponsive } from "@/helpers/useResponsive";
 import { cn } from "@/lib/utils";
-import type { House } from "./house";
+import type { Room } from "./room";
 import { useLocation } from "react-router-dom";
 
-export function HouseTable({
+export function RoomTable({
   lists,
   onAdd,
   onEdit,
   onDelete,
-  onViewRooms,
 }: {
-  lists: House[];
+  lists: Room[];
   onAdd: () => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
-  onViewRooms: (index: number) => void;
   onUp: (index: number) => void;
   onDown: (index: number) => void;
 }) {
@@ -51,7 +49,7 @@ export function HouseTable({
 
   return (
     <DataTable
-      columns={GetColumns(isMobile, onEdit, onDelete, onViewRooms)}
+      columns={GetColumns(isMobile, onEdit, onDelete)}
       data={lists}
       addButtonText={
         <PlusCircleIcon className={cn(`h-8 cursor-pointer text-app-primary`)} />
@@ -70,12 +68,10 @@ function ContextMenu({
   row,
   onEdit,
   onDelete,
-  onViewRooms,
 }: {
-  row: Row<House>;
+  row: Row<Room>;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
-  onViewRooms: (index: number) => void;
 }) {
   return (
     <DropdownMenu>
@@ -89,21 +85,15 @@ function ContextMenu({
         <DropdownMenuLabel>{row.original.name}</DropdownMenuLabel>
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => onEdit(row.original.houseId)}
+          onClick={() => onEdit(row.original.roomId)}
         >
           Edit
         </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => onDelete(row.original.houseId)}
+          onClick={() => onDelete(row.original.roomId)}
         >
           Delete
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={() => onViewRooms(row.original.houseId)}
-        >
-          View Rooms
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -113,22 +103,29 @@ function ContextMenu({
 function GetColumns(
   isMobile: boolean,
   onEdit: (index: number) => void,
-  onDelete: (index: number) => void,
-  onViewRooms: (index: number) => void
-): ColumnDef<House>[] {
+  onDelete: (index: number) => void
+): ColumnDef<Room>[] {
   return [
     {
       accessorKey: "name",
       header: "Name",
-      size: isMobile ? 180 : 400,
+      size: isMobile ? 120 : 250,
       cell: ({ row }) => {
         return row.original.name;
       },
     },
     {
+      accessorKey: "type",
+      header: "Type",
+      size: isMobile ? 80 : 150,
+      cell: ({ row }) => {
+        return row.original.type;
+      },
+    },
+    {
       accessorKey: "area",
-      header: "Area",
-      size: isMobile ? 30 : 60,
+      header: "Area (sq ft)",
+      size: isMobile ? 80 : 100,
       cell: ({ row }) => {
         return row.original.area;
       },
@@ -138,7 +135,7 @@ function GetColumns(
       size: 50,
       maxSize: 50,
       cell: ({ row }) => {
-        return ContextMenu({ row, onEdit, onDelete, onViewRooms });
+        return ContextMenu({ row, onEdit, onDelete });
       },
     },
   ];

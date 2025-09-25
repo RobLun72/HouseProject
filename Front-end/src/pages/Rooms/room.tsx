@@ -1,45 +1,59 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { HouseTable } from "./houseTable";
+import { useNavigate, useParams } from "react-router-dom";
 import { useApiEnvVariables } from "@/helpers/useApiEnvVariables";
 import { ConfirmDialog } from "@/components/ui/Dialog/ConfirmDialog";
 import { sortAscending } from "@/helpers/sortAndFilter";
+import { RoomTable } from "./roomTable";
 
 // TypeScript interfaces matching the HouseService API
-export interface House {
+export interface Room {
+  roomId: number;
   houseId: number;
   name: string;
-  address: string;
+  type: string;
   area: number;
+  placement: string;
 }
 
-interface HouseState {
+interface RoomState {
   loading: boolean;
-  houses: House[];
+  rooms: Room[];
   error?: string;
+  houseName?: string;
   // Delete functionality state
   showDeleteConfirm: boolean;
   showDeleteSuccess: boolean;
-  houseToDelete: House | null;
+  roomToDelete: Room | null;
   isDeleting: boolean;
 }
 
-export function House() {
+export function Room() {
   const navigate = useNavigate();
+  const { houseId } = useParams<{ houseId: string }>();
   const { apiUrl, apiKey } = useApiEnvVariables();
-  const [pageState, setPageState] = useState<HouseState>({
+  const [pageState, setPageState] = useState<RoomState>({
     loading: true,
-    houses: [],
+    rooms: [],
     showDeleteConfirm: false,
     showDeleteSuccess: false,
-    houseToDelete: null,
+    roomToDelete: null,
     isDeleting: false,
   });
 
   useEffect(() => {
-    async function fetchHouses() {
+    async function fetchRooms() {
+      if (!houseId) {
+        setPageState((prevState) => ({
+          ...prevState,
+          loading: false,
+          error: "No house ID provided",
+        }));
+        return;
+      }
+
       try {
-        const response = await fetch(`${apiUrl}/House`, {
+        // First, get house information for the title
+        const houseResponse = await fetch(`${apiUrl}/House/${houseId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -47,27 +61,43 @@ export function House() {
           },
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        let houseName = "Unknown House";
+        if (houseResponse.ok) {
+          const house = await houseResponse.json();
+          houseName = house.name;
         }
 
-        // The HouseService returns an array of houses directly, not wrapped in a response object
-        const houses: House[] = await response.json();
+        // Then get rooms for this house
+        const roomsResponse = await fetch(`${apiUrl}/Room/house/${houseId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": apiKey,
+          },
+        });
 
-        // Sort houses by name in ascending order
-        const sortedHouses = sortAscending(houses, "name");
+        if (!roomsResponse.ok) {
+          throw new Error(`HTTP error! status: ${roomsResponse.status}`);
+        }
+
+        // The HouseService returns an array of rooms directly
+        const rooms: Room[] = await roomsResponse.json();
+
+        // Sort rooms by name in ascending order
+        const sortedRooms = sortAscending(rooms, "name");
 
         setPageState((prevState) => ({
           ...prevState,
           loading: false,
-          houses: sortedHouses,
+          rooms: sortedRooms,
+          houseName: houseName,
         }));
       } catch (error) {
-        console.error("Error fetching houses:", error);
+        console.error("Error fetching rooms:", error);
         setPageState((prevState) => ({
           ...prevState,
           loading: false,
-          houses: [],
+          rooms: [],
           error:
             error instanceof Error
               ? error.message
@@ -76,40 +106,33 @@ export function House() {
       }
     }
 
-    if (
-      pageState.loading &&
-      pageState.houses.length === 0 &&
-      !pageState.error
-    ) {
-      fetchHouses();
+    if (pageState.loading && pageState.rooms.length === 0 && !pageState.error) {
+      fetchRooms();
     }
   }, [
     pageState.loading,
-    pageState.houses.length,
+    pageState.rooms.length,
     pageState.error,
     apiUrl,
     apiKey,
+    houseId,
   ]);
 
-  // Handler functions for the HouseTable component
+  // Handler functions for the RoomTable component
   const handleAdd = () => {
-    navigate("/house/add");
+    navigate(`/house/${houseId}/rooms/add`);
   };
 
-  const handleEdit = (houseId: number) => {
-    navigate(`/house/edit/${houseId}`);
+  const handleEdit = (roomId: number) => {
+    navigate(`/house/${houseId}/rooms/edit/${roomId}`);
   };
 
-  const handleViewRooms = (houseId: number) => {
-    navigate(`/house/${houseId}/rooms`);
-  };
-
-  const handleDelete = (houseId: number) => {
-    const house = pageState.houses.find((h) => h.houseId === houseId);
-    if (house) {
+  const handleDelete = (roomId: number) => {
+    const room = pageState.rooms.find((r) => r.roomId === roomId);
+    if (room) {
       setPageState((prevState) => ({
         ...prevState,
-        houseToDelete: house,
+        roomToDelete: room,
         showDeleteConfirm: true,
       }));
     }
@@ -119,12 +142,12 @@ export function House() {
     setPageState((prevState) => ({
       ...prevState,
       showDeleteConfirm: false,
-      houseToDelete: null,
+      roomToDelete: null,
     }));
   };
 
   const handleDeleteConfirm = async () => {
-    if (!pageState.houseToDelete) return;
+    if (!pageState.roomToDelete) return;
 
     setPageState((prevState) => ({
       ...prevState,
@@ -133,7 +156,7 @@ export function House() {
 
     try {
       const response = await fetch(
-        `${apiUrl}/House/${pageState.houseToDelete.houseId}`,
+        `${apiUrl}/Room/${pageState.roomToDelete.roomId}`,
         {
           method: "DELETE",
           headers: {
@@ -144,27 +167,27 @@ export function House() {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to delete house: ${response.status}`);
+        throw new Error(`Failed to delete room: ${response.status}`);
       }
 
-      // Remove the deleted house from the state
+      // Remove the deleted room from the state
       setPageState((prevState) => ({
         ...prevState,
-        houses: prevState.houses.filter(
-          (h) => h.houseId !== prevState.houseToDelete?.houseId
+        rooms: prevState.rooms.filter(
+          (r) => r.roomId !== prevState.roomToDelete?.roomId
         ),
         showDeleteConfirm: false,
-        houseToDelete: null,
+        roomToDelete: null,
         showDeleteSuccess: true,
         isDeleting: false,
       }));
     } catch (error) {
-      console.error("Error deleting house:", error);
+      console.error("Error deleting room:", error);
       // For now, just close the dialog. Could add error handling here.
       setPageState((prevState) => ({
         ...prevState,
         showDeleteConfirm: false,
-        houseToDelete: null,
+        roomToDelete: null,
         isDeleting: false,
       }));
       // Could show an error dialog here if needed
@@ -178,13 +201,27 @@ export function House() {
     }));
   };
 
+  const handleBackToHouses = () => {
+    navigate("/");
+  };
+
   return (
     <div className="min-w-sm max-w-md md:min-w-3xl md:max-w-7xl px-4 py-8">
-      <h2 className="text-center text-3xl font-bold mb-6">Houses</h2>
+      <div className="mb-6">
+        <button
+          onClick={handleBackToHouses}
+          className="mb-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 focus:outline-none"
+        >
+          ← Back to Houses
+        </button>
+        <h2 className="text-center text-3xl font-bold mb-2">
+          Rooms - {pageState.houseName}
+        </h2>
+      </div>
 
       {pageState.loading && (
         <div className="flex justify-center">
-          <div className="text-lg">Loading houses...</div>
+          <div className="text-lg">Loading rooms...</div>
         </div>
       )}
 
@@ -196,17 +233,18 @@ export function House() {
 
       {!pageState.loading &&
         !pageState.error &&
-        pageState.houses.length === 0 && (
-          <div className="text-center text-gray-500">No houses found.</div>
+        pageState.rooms.length === 0 && (
+          <div className="text-center text-gray-500">
+            No rooms found for this house.
+          </div>
         )}
 
-      {!pageState.loading && pageState.houses.length > 0 && (
-        <HouseTable
-          lists={pageState.houses}
+      {!pageState.loading && pageState.rooms.length > 0 && (
+        <RoomTable
+          lists={pageState.rooms}
           onAdd={handleAdd}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onViewRooms={handleViewRooms}
           onUp={() => {}} // Not used but required by interface
           onDown={() => {}} // Not used but required by interface
         />
@@ -215,8 +253,8 @@ export function House() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={pageState.showDeleteConfirm}
-        title="Delete House"
-        description={`Are you sure you want to delete "${pageState.houseToDelete?.name}"? This action cannot be undone.`}
+        title="Delete Room"
+        description={`Are you sure you want to delete "${pageState.roomToDelete?.name}"? This action cannot be undone.`}
         onCancel={handleDeleteCancel}
         onOk={handleDeleteConfirm}
         cancelText="Cancel"
@@ -226,8 +264,8 @@ export function House() {
       {/* Delete Success Dialog */}
       <ConfirmDialog
         isOpen={pageState.showDeleteSuccess}
-        title="House Deleted Successfully"
-        description="The house has been deleted successfully."
+        title="Room Deleted Successfully"
+        description="The room has been deleted successfully."
         onOk={handleDeleteSuccessOk}
         okText="OK"
       />
