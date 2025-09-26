@@ -60,8 +60,12 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<HouseDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register Message Publisher
+// Register services
 builder.Services.AddScoped<IMessagePublisher, MessagePublisher>();
+builder.Services.AddScoped<IOutboxService, OutboxService>();
+
+// Register background service for processing outbox events
+builder.Services.AddHostedService<OutboxProcessorService>();
 
 // Configure MassTransit with RabbitMQ
 builder.Services.AddMassTransit(x =>

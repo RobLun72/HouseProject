@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using HouseService.Models;
+using HouseService.Entities;
 
 namespace HouseService.Data
 {
@@ -11,6 +12,7 @@ namespace HouseService.Data
 
         public DbSet<House> Houses { get; set; }
         public DbSet<Room> Rooms { get; set; }
+        public DbSet<OutboxEvent> OutboxEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +41,22 @@ namespace HouseService.Data
                 entity.Property(e => e.HouseId).IsRequired();
                 entity.Property(e => e.Area).IsRequired().HasPrecision(10, 2);
                 entity.Property(e => e.Placement).IsRequired().HasMaxLength(200);
+            });
+
+            // Configure OutboxEvent entity
+            modelBuilder.Entity<OutboxEvent>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.EventType).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.EventData).IsRequired();
+                entity.Property(e => e.CreatedAt).IsRequired();
+                entity.Property(e => e.IsPublished).IsRequired();
+                entity.Property(e => e.RetryCount).IsRequired();
+                entity.Property(e => e.LastError).HasMaxLength(1000);
+
+                // Index for efficient querying of unpublished events
+                entity.HasIndex(e => new { e.IsPublished, e.CreatedAt });
             });
 
             // Seed initial data
