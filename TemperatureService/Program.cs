@@ -99,6 +99,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
+                "http://localhost:3000", "https://localhost:3000", // Docker containerized frontend
                 "http://localhost:5173", "https://localhost:5173", // Vite dev server default port
                 "http://localhost:5174", "https://localhost:5174"  // Vite dev server alternate port
               )

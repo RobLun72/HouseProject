@@ -13,6 +13,12 @@ namespace HouseService.Attributes
             var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<ApiKeyAuthAttribute>>();
 
+            // Allow OPTIONS requests (CORS preflight) to pass through without authentication
+            if (context.HttpContext.Request.Method == "OPTIONS")
+            {
+                return;
+            }
+
             // Get the API key from the request header
             if (!context.HttpContext.Request.Headers.TryGetValue(API_KEY_HEADER_NAME, out var extractedApiKey))
             {
