@@ -18,196 +18,6 @@ public class TemperatureControllerTests : TestBase
     }
 
     [Fact]
-    public async Task GetTemperatures_NoFilters_ReturnsAllTemperatures()
-    {
-        // Act
-        var result = await _controller.GetTemperatures();
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.Equal(6, temperatures.Count());
-    }
-
-    [Fact]
-    public async Task GetTemperatures_WithDateFilter_ReturnsFilteredTemperatures()
-    {
-        // Arrange
-        var filterDate = DateTime.UtcNow.Date;
-
-        // Act
-        var result = await _controller.GetTemperatures(filterDate);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.All(temperatures, t => Assert.Equal(filterDate.Date, t.Date.Date));
-    }
-
-    [Fact]
-    public async Task GetTemperatures_WithRoomIdFilter_ReturnsFilteredTemperatures()
-    {
-        // Arrange
-        var roomId = 1;
-
-        // Act
-        var result = await _controller.GetTemperatures(null, roomId);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.All(temperatures, t => Assert.Equal(roomId, t.RoomId));
-        Assert.Equal(3, temperatures.Count());
-    }
-
-    [Fact]
-    public async Task GetTemperatures_WithBothFilters_ReturnsFilteredTemperatures()
-    {
-        // Arrange
-        var filterDate = DateTime.UtcNow.Date;
-        var roomId = 1;
-
-        // Act
-        var result = await _controller.GetTemperatures(filterDate, roomId);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.All(temperatures, t => 
-        {
-            Assert.Equal(filterDate.Date, t.Date.Date);
-            Assert.Equal(roomId, t.RoomId);
-        });
-    }
-
-    [Fact]
-    public async Task GetTemperature_ExistingId_ReturnsOkWithTemperature()
-    {
-        // Arrange
-        var tempId = 1;
-
-        // Act
-        var result = await _controller.GetTemperature(tempId);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperature = Assert.IsType<Temperature>(okResult.Value);
-        Assert.Equal(tempId, temperature.TempId);
-    }
-
-    [Fact]
-    public async Task GetTemperature_NonExistentId_ReturnsNotFound()
-    {
-        // Arrange
-        var tempId = 999;
-
-        // Act
-        var result = await _controller.GetTemperature(tempId);
-
-        // Assert
-        Assert.IsType<NotFoundResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task GetTemperaturesByRoom_ExistingRoom_ReturnsTemperatures()
-    {
-        // Arrange
-        var roomId = 1;
-
-        // Act
-        var result = await _controller.GetTemperaturesByRoom(roomId);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.All(temperatures, t => Assert.Equal(roomId, t.RoomId));
-        Assert.Equal(3, temperatures.Count());
-    }
-
-    [Fact]
-    public async Task GetTemperaturesByRoom_WithDateFilter_ReturnsFilteredTemperatures()
-    {
-        // Arrange
-        var roomId = 1;
-        var filterDate = DateTime.UtcNow.Date;
-
-        // Act
-        var result = await _controller.GetTemperaturesByRoom(roomId, filterDate);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.All(temperatures, t => 
-        {
-            Assert.Equal(roomId, t.RoomId);
-            Assert.Equal(filterDate.Date, t.Date.Date);
-        });
-    }
-
-    [Fact]
-    public async Task GetTemperaturesByRoom_NonExistentRoom_ReturnsEmptyList()
-    {
-        // Arrange
-        var roomId = 999;
-
-        // Act
-        var result = await _controller.GetTemperaturesByRoom(roomId);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.Empty(temperatures);
-    }
-
-    [Fact]
-    public async Task GetTemperatureByRoomAndHour_ExistingData_ReturnsTemperature()
-    {
-        // Arrange
-        var roomId = 1;
-        var hour = 8;
-        var date = DateTime.UtcNow.Date;
-
-        // Act
-        var result = await _controller.GetTemperatureByRoomAndHour(roomId, hour, date);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperature = Assert.IsType<Temperature>(okResult.Value);
-        Assert.Equal(roomId, temperature.RoomId);
-        Assert.Equal(hour, temperature.Hour);
-    }
-
-    [Fact]
-    public async Task GetTemperatureByRoomAndHour_NonExistentData_ReturnsNotFound()
-    {
-        // Arrange
-        var roomId = 999;
-        var hour = 8;
-
-        // Act
-        var result = await _controller.GetTemperatureByRoomAndHour(roomId, hour);
-
-        // Assert
-        Assert.IsType<NotFoundResult>(result.Result);
-    }
-
-    [Fact]
-    public async Task GetTemperaturesByDate_ExistingDate_ReturnsTemperatures()
-    {
-        // Arrange
-        var date = DateTime.UtcNow.Date;
-
-        // Act
-        var result = await _controller.GetTemperaturesByDate(date);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
-        Assert.All(temperatures, t => Assert.Equal(date.Date, t.Date.Date));
-        Assert.Equal(6, temperatures.Count());
-    }
-
-    [Fact]
     public async Task GetTemperaturesByRoomAndDate_ExistingData_ReturnsTemperatures()
     {
         // Arrange
@@ -229,37 +39,104 @@ public class TemperatureControllerTests : TestBase
     }
 
     [Fact]
-    public async Task GetTemperatureByRoomDateAndHour_ExistingData_ReturnsTemperature()
-    {
-        // Arrange
-        var roomId = 1;
-        var date = DateTime.UtcNow.Date;
-        var hour = 8;
-
-        // Act
-        var result = await _controller.GetTemperatureByRoomDateAndHour(roomId, date, hour);
-
-        // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var temperature = Assert.IsType<Temperature>(okResult.Value);
-        Assert.Equal(roomId, temperature.RoomId);
-        Assert.Equal(date.Date, temperature.Date.Date);
-        Assert.Equal(hour, temperature.Hour);
-    }
-
-    [Fact]
-    public async Task GetTemperatureByRoomDateAndHour_NonExistentData_ReturnsNotFound()
+    public async Task GetTemperaturesByRoomAndDate_NonExistentRoom_ReturnsEmptyList()
     {
         // Arrange
         var roomId = 999;
         var date = DateTime.UtcNow.Date;
-        var hour = 8;
 
         // Act
-        var result = await _controller.GetTemperatureByRoomDateAndHour(roomId, date, hour);
+        var result = await _controller.GetTemperaturesByRoomAndDate(roomId, date);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
+        Assert.Empty(temperatures);
+    }
+
+    [Fact]
+    public async Task GetTemperaturesByRoomAndDate_FutureDate_ReturnsEmptyList()
+    {
+        // Arrange
+        var roomId = 1;
+        var futureDate = DateTime.UtcNow.Date.AddDays(10);
+
+        // Act
+        var result = await _controller.GetTemperaturesByRoomAndDate(roomId, futureDate);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value);
+        Assert.Empty(temperatures);
+    }
+
+    [Fact]
+    public async Task GetTemperaturesByRoomAndDate_ValidatesUtcDateHandling()
+    {
+        // Arrange
+        var roomId = 1;
+        var date = DateTime.UtcNow.Date;
+
+        // Act
+        var result = await _controller.GetTemperaturesByRoomAndDate(roomId, date);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var temperatures = Assert.IsAssignableFrom<IEnumerable<Temperature>>(okResult.Value).ToList();
+        
+        // Verify temperatures are ordered by hour
+        var hours = temperatures.Select(t => t.Hour).ToList();
+        Assert.Equal(hours.OrderBy(h => h), hours);
+    }
+
+    [Fact]
+    public async Task GetAvailableDatesForRoom_ExistingRoom_ReturnsOrderedDates()
+    {
+        // Arrange
+        var roomId = 1;
+
+        // Act
+        var result = await _controller.GetAvailableDatesForRoom(roomId);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var dates = Assert.IsAssignableFrom<IEnumerable<DateTime>>(okResult.Value).ToList();
+        
+        // Verify dates are in descending order (newest first)
+        Assert.Equal(dates.OrderByDescending(d => d), dates);
+        Assert.NotEmpty(dates);
+    }
+
+    [Fact]
+    public async Task GetAvailableDatesForRoom_NonExistentRoom_ReturnsEmptyList()
+    {
+        // Arrange
+        var roomId = 999;
+
+        // Act
+        var result = await _controller.GetAvailableDatesForRoom(roomId);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var dates = Assert.IsAssignableFrom<IEnumerable<DateTime>>(okResult.Value);
+        Assert.Empty(dates);
+    }
+
+    [Fact]
+    public async Task GetAvailableDatesForRoom_ReturnsDistinctDatesOnly()
+    {
+        // Arrange
+        var roomId = 1;
+
+        // Act
+        var result = await _controller.GetAvailableDatesForRoom(roomId);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var dates = Assert.IsAssignableFrom<IEnumerable<DateTime>>(okResult.Value).ToList();
+        
+        // Verify no duplicate dates
+        Assert.Equal(dates.Distinct().Count(), dates.Count);
     }
 
     [Fact]
@@ -278,12 +155,15 @@ public class TemperatureControllerTests : TestBase
         var result = await _controller.CreateTemperature(request);
 
         // Assert
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var createdResult = Assert.IsType<CreatedResult>(result.Result);
         var temperature = Assert.IsType<Temperature>(createdResult.Value);
         Assert.Equal(request.RoomId, temperature.RoomId);
         Assert.Equal(request.Hour, temperature.Hour);
         Assert.Equal(request.Degrees, temperature.Degrees);
         Assert.Equal(request.Date.Date, temperature.Date.Date);
+        
+        // Verify location header is set correctly
+        Assert.Equal($"/Temperature/{temperature.TempId}", createdResult.Location);
     }
 
     [Fact]
@@ -332,7 +212,7 @@ public class TemperatureControllerTests : TestBase
         var result = await _controller.CreateTemperature(request);
 
         // Assert
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var createdResult = Assert.IsType<CreatedResult>(result.Result);
         var temperature = Assert.IsType<Temperature>(createdResult.Value);
         Assert.Equal(DateTime.UtcNow.Date, temperature.Date.Date);
     }
