@@ -49,16 +49,34 @@ interface TemperatureFormData {
 }
 
 interface PageState {
+  // Data
   housesWithRooms: HouseWithRooms[];
   availableDates: AvailableDate[];
   temperatures: Temperature[];
+
+  // Selections
   selectedHouseId: number | null;
   selectedRoomId: number | null;
   selectedDate: string | null;
   selectedTemperature: Temperature | null;
-  loadingHousesWithRooms: boolean;
-  loadingDates: boolean;
-  loadingTemperatures: boolean;
+
+  // Loading states (consolidated)
+  loading: {
+    housesWithRooms: boolean;
+    dates: boolean;
+    temperatures: boolean;
+    saving: boolean;
+  };
+
+  // Error states (centralized)
+  errors: {
+    housesWithRooms?: string;
+    dates?: string;
+    temperatures?: string;
+    saving?: string;
+  };
+
+  // UI state
   showSuccessDialog: boolean;
 }
 
@@ -73,9 +91,13 @@ export function ReportTemperature() {
     selectedRoomId: null,
     selectedDate: null,
     selectedTemperature: null,
-    loadingHousesWithRooms: true,
-    loadingDates: false,
-    loadingTemperatures: false,
+    loading: {
+      housesWithRooms: true,
+      dates: false,
+      temperatures: false,
+      saving: false,
+    },
+    errors: {},
     showSuccessDialog: false,
   });
 
@@ -90,6 +112,12 @@ export function ReportTemperature() {
 
   // Save temperature record function
   const onSave = async (data: TemperatureFormData) => {
+    setPageState((prev) => ({
+      ...prev,
+      loading: { ...prev.loading, saving: true },
+      errors: { ...prev.errors, saving: undefined },
+    }));
+
     try {
       const response = await fetch(`${apiUrl}/Temperature/${data.tempId}`, {
         method: "PUT",
@@ -134,6 +162,7 @@ export function ReportTemperature() {
         ...prev,
         temperatures: updatedTemperatures,
         selectedTemperature: updatedSelectedTemperature,
+        loading: { ...prev.loading, saving: false },
         showSuccessDialog: true,
       }));
 
@@ -141,7 +170,14 @@ export function ReportTemperature() {
       reset(data);
     } catch (error) {
       console.error("Error saving temperature:", error);
-      alert("Failed to save temperature record. Please try again.");
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+
+      setPageState((prev) => ({
+        ...prev,
+        loading: { ...prev.loading, saving: false },
+        errors: { ...prev.errors, saving: errorMessage },
+      }));
     }
   };
 
@@ -155,14 +191,23 @@ export function ReportTemperature() {
 
   // Load all houses with rooms on component mount
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchHousesWithRooms = async () => {
       try {
+        setPageState((prev) => ({
+          ...prev,
+          loading: { ...prev.loading, housesWithRooms: true },
+          errors: { ...prev.errors, housesWithRooms: undefined },
+        }));
+
         const response = await fetch(`${apiUrl}/HousesWithRooms`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             "X-Api-Key": apiKey,
           },
+          signal: abortController.signal,
         });
 
         if (!response.ok) {
@@ -170,22 +215,37 @@ export function ReportTemperature() {
         }
 
         const result = await response.json();
-        // The TemperatureService returns a HousesWithRoomsResult object with a houses array (camelCase)
-        setPageState((prev) => ({
-          ...prev,
-          housesWithRooms: result.houses || [],
-          loadingHousesWithRooms: false,
-        }));
+
+        // Only update state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          setPageState((prev) => ({
+            ...prev,
+            housesWithRooms: result.houses || [],
+            loading: { ...prev.loading, housesWithRooms: false },
+          }));
+        }
       } catch (error) {
+        // Ignore AbortError as it's expected when component unmounts
+        if (error instanceof Error && error.name === "AbortError") return;
+
         console.error("Error fetching houses with rooms:", error);
-        setPageState((prev) => ({
-          ...prev,
-          loadingHousesWithRooms: false,
-        }));
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to load houses";
+
+        if (!abortController.signal.aborted) {
+          setPageState((prev) => ({
+            ...prev,
+            loading: { ...prev.loading, housesWithRooms: false },
+            errors: { ...prev.errors, housesWithRooms: errorMessage },
+          }));
+        }
       }
     };
 
     fetchHousesWithRooms();
+
+    // Cleanup function to abort request if component unmounts
+    return () => abortController.abort();
   }, [apiUrl, apiKey]);
 
   const handleHouseChange = (value: string) => {
@@ -215,8 +275,14 @@ export function ReportTemperature() {
   // Load available dates when a room is selected
   useEffect(() => {
     if (pageState.selectedRoomId) {
+      const abortController = new AbortController();
+
       const fetchAvailableDates = async () => {
-        setPageState((prev) => ({ ...prev, loadingDates: true }));
+        setPageState((prev) => ({
+          ...prev,
+          loading: { ...prev.loading, dates: true },
+          errors: { ...prev.errors, dates: undefined },
+        }));
 
         try {
           const response = await fetch(
@@ -227,6 +293,7 @@ export function ReportTemperature() {
                 "Content-Type": "application/json",
                 "X-Api-Key": apiKey,
               },
+              signal: abortController.signal,
             }
           );
 
@@ -247,27 +314,43 @@ export function ReportTemperature() {
             }),
           }));
 
-          setPageState((prev) => ({
-            ...prev,
-            availableDates: formattedDates,
-            loadingDates: false,
-          }));
+          // Only update state if request wasn't aborted
+          if (!abortController.signal.aborted) {
+            setPageState((prev) => ({
+              ...prev,
+              availableDates: formattedDates,
+              loading: { ...prev.loading, dates: false },
+            }));
+          }
         } catch (error) {
+          // Ignore AbortError as it's expected when dependencies change
+          if (error instanceof Error && error.name === "AbortError") return;
+
           console.error("Error fetching available dates:", error);
-          setPageState((prev) => ({
-            ...prev,
-            availableDates: [],
-            loadingDates: false,
-          }));
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to load dates";
+
+          if (!abortController.signal.aborted) {
+            setPageState((prev) => ({
+              ...prev,
+              availableDates: [],
+              loading: { ...prev.loading, dates: false },
+              errors: { ...prev.errors, dates: errorMessage },
+            }));
+          }
         }
       };
 
       fetchAvailableDates();
+
+      // Cleanup function to abort request if dependencies change
+      return () => abortController.abort();
     } else {
       setPageState((prev) => ({
         ...prev,
         availableDates: [],
         selectedDate: null,
+        loading: { ...prev.loading, dates: false },
       }));
     }
   }, [pageState.selectedRoomId, apiUrl, apiKey]);
@@ -275,8 +358,14 @@ export function ReportTemperature() {
   // Load temperature records when date is selected
   useEffect(() => {
     if (pageState.selectedRoomId && pageState.selectedDate) {
+      const abortController = new AbortController();
+
       const fetchTemperatures = async () => {
-        setPageState((prev) => ({ ...prev, loadingTemperatures: true }));
+        setPageState((prev) => ({
+          ...prev,
+          loading: { ...prev.loading, temperatures: true },
+          errors: { ...prev.errors, temperatures: undefined },
+        }));
 
         try {
           const response = await fetch(
@@ -287,6 +376,7 @@ export function ReportTemperature() {
                 "Content-Type": "application/json",
                 "X-Api-Key": apiKey,
               },
+              signal: abortController.signal,
             }
           );
 
@@ -300,27 +390,45 @@ export function ReportTemperature() {
             (a, b) => a.hour - b.hour
           );
 
-          setPageState((prev) => ({
-            ...prev,
-            temperatures: sortedTemperatures,
-            loadingTemperatures: false,
-          }));
+          // Only update state if request wasn't aborted
+          if (!abortController.signal.aborted) {
+            setPageState((prev) => ({
+              ...prev,
+              temperatures: sortedTemperatures,
+              loading: { ...prev.loading, temperatures: false },
+            }));
+          }
         } catch (error) {
+          // Ignore AbortError as it's expected when dependencies change
+          if (error instanceof Error && error.name === "AbortError") return;
+
           console.error("Error fetching temperature records:", error);
-          setPageState((prev) => ({
-            ...prev,
-            temperatures: [],
-            loadingTemperatures: false,
-          }));
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to load temperatures";
+
+          if (!abortController.signal.aborted) {
+            setPageState((prev) => ({
+              ...prev,
+              temperatures: [],
+              loading: { ...prev.loading, temperatures: false },
+              errors: { ...prev.errors, temperatures: errorMessage },
+            }));
+          }
         }
       };
 
       fetchTemperatures();
+
+      // Cleanup function to abort request if dependencies change
+      return () => abortController.abort();
     } else {
       setPageState((prev) => ({
         ...prev,
         temperatures: [],
         selectedTemperature: null,
+        loading: { ...prev.loading, temperatures: false },
       }));
     }
   }, [pageState.selectedRoomId, pageState.selectedDate, apiUrl, apiKey]);
@@ -430,6 +538,24 @@ export function ReportTemperature() {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+        {/* Error Display */}
+        {(pageState.errors.housesWithRooms ||
+          pageState.errors.dates ||
+          pageState.errors.temperatures) && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <strong>Error:</strong>
+            <ul className="mt-1 list-disc list-inside">
+              {pageState.errors.housesWithRooms && (
+                <li>{pageState.errors.housesWithRooms}</li>
+              )}
+              {pageState.errors.dates && <li>{pageState.errors.dates}</li>}
+              {pageState.errors.temperatures && (
+                <li>{pageState.errors.temperatures}</li>
+              )}
+            </ul>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* House Selection */}
           <div className="space-y-2">
@@ -439,12 +565,12 @@ export function ReportTemperature() {
             <Select
               value={pageState.selectedHouseId?.toString() || ""}
               onValueChange={handleHouseChange}
-              disabled={pageState.loadingHousesWithRooms}
+              disabled={pageState.loading.housesWithRooms}
             >
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    pageState.loadingHousesWithRooms
+                    pageState.loading.housesWithRooms
                       ? "Loading houses..."
                       : "Choose a house"
                   }
@@ -517,7 +643,7 @@ export function ReportTemperature() {
               onValueChange={handleDateChange}
               disabled={
                 !pageState.selectedRoomId ||
-                pageState.loadingDates ||
+                pageState.loading.dates ||
                 pageState.availableDates.length === 0
               }
             >
@@ -526,7 +652,7 @@ export function ReportTemperature() {
                   placeholder={
                     !pageState.selectedRoomId
                       ? "Select a room first"
-                      : pageState.loadingDates
+                      : pageState.loading.dates
                       ? "Loading dates..."
                       : pageState.availableDates.length === 0
                       ? "No dates available"
@@ -548,7 +674,7 @@ export function ReportTemperature() {
         {/* Temperature Time Buttons */}
         {pageState.selectedDate && pageState.temperatures.length > 0 && (
           <div className="space-y-4">
-            {pageState.loadingTemperatures ? (
+            {pageState.loading.temperatures ? (
               <div className="flex justify-center py-4">
                 <div className="text-sm text-gray-500">
                   Loading temperature records...
@@ -656,16 +782,23 @@ export function ReportTemperature() {
 
                       {/* Save Button */}
                       <div className="flex justify-end pt-4">
+                        {pageState.errors.saving && (
+                          <div className="mr-4 text-sm text-red-600 self-center">
+                            {pageState.errors.saving}
+                          </div>
+                        )}
                         <button
                           type="submit"
-                          disabled={!isDirty}
+                          disabled={!isDirty || pageState.loading.saving}
                           className={`px-6 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                            isDirty
+                            isDirty && !pageState.loading.saving
                               ? "bg-app-primary text-white hover:bg-app-primary-dark focus:ring-app-primary cursor-pointer"
                               : "bg-gray-300 text-gray-500 cursor-not-allowed"
                           }`}
                         >
-                          Save Changes
+                          {pageState.loading.saving
+                            ? "Saving..."
+                            : "Save Changes"}
                         </button>
                       </div>
                     </form>
@@ -679,7 +812,7 @@ export function ReportTemperature() {
         {/* Empty State Message */}
         {pageState.selectedDate &&
           pageState.temperatures.length === 0 &&
-          !pageState.loadingTemperatures && (
+          !pageState.loading.temperatures && (
             <div className="text-center py-8">
               <p className="text-gray-500">
                 No temperature records found for the selected date.
