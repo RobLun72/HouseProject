@@ -12,6 +12,7 @@ namespace MessageContracts
         string Name { get; }
         string Type { get; }
         decimal Area { get; }
+        string Placement { get; }
     }
 
     public interface IRoomUpdated : IRoomEvent
@@ -19,6 +20,7 @@ namespace MessageContracts
         string Name { get; }
         string Type { get; }
         decimal Area { get; }
+        string Placement { get; }
     }
 
     public interface IRoomDeleted : IRoomEvent
@@ -32,6 +34,7 @@ namespace MessageContracts
         public string Name { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public decimal Area { get; set; }
+        public string Placement { get; set; } = string.Empty;
         public DateTime EventTime { get; set; }
     }
 
@@ -42,6 +45,7 @@ namespace MessageContracts
         public string Name { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public decimal Area { get; set; }
+        public string Placement { get; set; } = string.Empty;
         public DateTime EventTime { get; set; }
     }
 

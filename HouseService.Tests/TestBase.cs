@@ -3,16 +3,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using HouseService.Data;
 using HouseService.Services;
+using HouseService.Models;
 using Moq;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace HouseService.Tests
 {
     public class TestBase : IDisposable
     {
         protected readonly DbContextOptions<HouseDbContext> DbContextOptions;
-        protected readonly Mock<IMessagePublisher> MockMessagePublisher;
         protected readonly Mock<ILogger<object>> MockLogger;
 
         public TestBase()
@@ -23,7 +25,6 @@ namespace HouseService.Tests
                 .Options;
 
             // Setup mocks
-            MockMessagePublisher = new Mock<IMessagePublisher>();
             MockLogger = new Mock<ILogger<object>>();
         }
 
@@ -77,17 +78,21 @@ namespace HouseService.Tests
                     options.UseInMemoryDatabase("TestDatabase");
                 });
 
-                // Replace message publisher with mock
-                var publisherDescriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(IMessagePublisher));
-                if (publisherDescriptor != null)
-                    services.Remove(publisherDescriptor);
+                // Replace outbox service with mock
+                var outboxDescriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(IOutboxService));
+                if (outboxDescriptor != null)
+                    services.Remove(outboxDescriptor);
 
-                services.AddSingleton<IMessagePublisher>(provider =>
-                {
-                    var mock = new Mock<IMessagePublisher>();
-                    return mock.Object;
-                });
+                // Replace transactional outbox service with mock
+                var transactionalDescriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(ITransactionalOutboxService));
+                if (transactionalDescriptor != null)
+                    services.Remove(transactionalDescriptor);
+
+                services.AddSingleton<IOutboxService, OutboxService>();
+
+                services.AddSingleton<ITransactionalOutboxService, TransactionalOutboxService>();
             });
         }
     }

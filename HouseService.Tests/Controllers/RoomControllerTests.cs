@@ -4,6 +4,7 @@ using HouseService.Controllers;
 using HouseService.Data;
 using HouseService.Services;
 using HouseService.Models;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
@@ -14,7 +15,9 @@ namespace HouseService.Tests.Controllers
         private RoomController CreateController(HouseDbContext context)
         {
             var mockLogger = new Mock<ILogger<RoomController>>();
-            return new RoomController(context, mockLogger.Object, MockMessagePublisher.Object);
+            var outboxService = new OutboxService();
+            var transactionalOutboxService = new TransactionalOutboxService(outboxService);
+            return new RoomController(context, mockLogger.Object, transactionalOutboxService);
         }
 
         [Fact]
@@ -133,15 +136,10 @@ namespace HouseService.Tests.Controllers
             Assert.NotNull(roomInDb);
             Assert.Equal("New Bathroom", roomInDb.Name);
 
-            // Verify message was published
-            MockMessagePublisher.Verify(
-                x => x.PublishRoomCreatedAsync(
-                    It.Is<int>(id => id == room.RoomId),
-                    It.Is<int>(houseId => houseId == 1),
-                    It.Is<string>(name => name == "New Bathroom"),
-                    It.Is<string>(type => type == "Bathroom"),
-                    It.Is<decimal>(area => area == 15.0m)),
-                Times.Once);
+            // Verify outbox event was created
+            var outboxEvents = await context.OutboxEvents.ToListAsync();
+            Assert.Single(outboxEvents);
+            Assert.Equal("RoomCreated", outboxEvents[0].EventType);
         }
 
         [Fact]
@@ -210,15 +208,10 @@ namespace HouseService.Tests.Controllers
             Assert.Equal(60.0m, updatedRoom.Area);
             Assert.Equal("Updated Floor", updatedRoom.Placement);
 
-            // Verify message was published
-            MockMessagePublisher.Verify(
-                x => x.PublishRoomUpdatedAsync(
-                    It.Is<int>(id => id == 1),
-                    It.Is<int>(houseId => houseId == 1),
-                    It.Is<string>(name => name == "Updated Living Room"),
-                    It.Is<string>(type => type == "Living"),
-                    It.Is<decimal>(area => area == 60.0m)),
-                Times.Once);
+            // Verify outbox event was created
+            var outboxEvents = await context.OutboxEvents.ToListAsync();
+            Assert.Single(outboxEvents);
+            Assert.Equal("RoomUpdated", outboxEvents[0].EventType);
         }
 
         [Fact]
@@ -300,12 +293,10 @@ namespace HouseService.Tests.Controllers
             var deletedRoom = await context.Rooms.FindAsync(1);
             Assert.Null(deletedRoom);
 
-            // Verify message was published
-            MockMessagePublisher.Verify(
-                x => x.PublishRoomDeletedAsync(
-                    It.Is<int>(id => id == 1),
-                    It.Is<int>(houseId => houseId == 1)),
-                Times.Once);
+            // Verify outbox event was created
+            var outboxEvents = await context.OutboxEvents.ToListAsync();
+            Assert.Single(outboxEvents);
+            Assert.Equal("RoomDeleted", outboxEvents[0].EventType);
         }
 
         [Fact]
