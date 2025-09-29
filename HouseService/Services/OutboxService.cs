@@ -79,6 +79,7 @@ namespace HouseService.Services
                 Name = name,
                 Type = type,
                 Area = area,
+                Placement = placement,
                 EventTime = DateTime.UtcNow
             };
 
@@ -99,6 +100,7 @@ namespace HouseService.Services
                 Name = name,
                 Type = type,
                 Area = area,
+                Placement = placement,
                 EventTime = DateTime.UtcNow
             };
 

@@ -74,7 +74,15 @@ public class SyncControllerTests : TestBase
         {
             EventType = "Updated",
             EntityType = "Room",
-            Data = new TemperatureService.Models.RoomDto { RoomId = 1, HouseId = 1, Area = 25.0m, Placement = "Living Room" },
+            Data = new TemperatureService.Models.RoomDto 
+            { 
+                RoomId = 1, 
+                HouseId = 1, 
+                Name = "Living Room",
+                Type = "Living",
+                Area = 25.0m, 
+                Placement = "Ground Floor" 
+            },
             Timestamp = DateTime.UtcNow
         };
 
@@ -146,6 +154,8 @@ public class SyncControllerTests : TestBase
         { 
             RoomId = 3, 
             HouseId = 1, 
+            Name = "Kitchen",
+            Type = "Kitchen",
             Area = 30.0m, 
             Placement = "Updated Kitchen" 
         };
@@ -272,7 +282,15 @@ public class SyncControllerTests : TestBase
         {
             EventType = "Updated",
             EntityType = "Room",
-            Data = new TemperatureService.Models.RoomDto { RoomId = 1, HouseId = 1, Area = 25.0m, Placement = "Living Room" },
+            Data = new TemperatureService.Models.RoomDto 
+            { 
+                RoomId = 1, 
+                HouseId = 1, 
+                Name = "Living Room",
+                Type = "Living",
+                Area = 25.0m, 
+                Placement = "Ground Floor" 
+            },
             Timestamp = DateTime.UtcNow
         };
 

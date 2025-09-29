@@ -63,6 +63,7 @@ builder.Services.AddDbContext<HouseDbContext>(options =>
 // Register services
 builder.Services.AddScoped<IMessagePublisher, MessagePublisher>();
 builder.Services.AddScoped<IOutboxService, OutboxService>();
+builder.Services.AddScoped<ITransactionalOutboxService, TransactionalOutboxService>();
 
 // Register background service for processing outbox events
 builder.Services.AddHostedService<OutboxProcessorService>();

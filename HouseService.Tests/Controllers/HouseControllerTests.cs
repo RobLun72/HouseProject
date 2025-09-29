@@ -4,6 +4,7 @@ using HouseService.Controllers;
 using HouseService.Data;
 using HouseService.Services;
 using HouseService.Models;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
@@ -14,7 +15,9 @@ namespace HouseService.Tests.Controllers
         private HouseController CreateController(HouseDbContext context)
         {
             var mockLogger = new Mock<ILogger<HouseController>>();
-            return new HouseController(context, mockLogger.Object, MockMessagePublisher.Object);
+            var outboxService = new OutboxService();
+            var transactionalOutboxService = new TransactionalOutboxService(outboxService);
+            return new HouseController(context, mockLogger.Object, transactionalOutboxService);
         }
 
         [Fact]
@@ -94,14 +97,10 @@ namespace HouseService.Tests.Controllers
             Assert.NotNull(houseInDb);
             Assert.Equal("New Test House", houseInDb.Name);
 
-            // Verify message was published
-            MockMessagePublisher.Verify(
-                x => x.PublishHouseCreatedAsync(
-                    It.Is<int>(id => id == house.HouseId),
-                    It.Is<string>(name => name == "New Test House"),
-                    It.Is<string>(address => address == "789 New St"),
-                    It.Is<decimal>(area => area == 200.0m)),
-                Times.Once);
+            // Verify outbox event was created  
+            var outboxEvents = await context.OutboxEvents.ToListAsync();
+            Assert.Single(outboxEvents);
+            Assert.Equal("HouseCreated", outboxEvents[0].EventType);
         }
 
         [Fact]
@@ -145,14 +144,10 @@ namespace HouseService.Tests.Controllers
             Assert.Equal("Updated Address", updatedHouse.Address);
             Assert.Equal(250.0m, updatedHouse.Area);
 
-            // Verify message was published
-            MockMessagePublisher.Verify(
-                x => x.PublishHouseUpdatedAsync(
-                    It.Is<int>(id => id == 1),
-                    It.Is<string>(name => name == "Updated House"),
-                    It.Is<string>(address => address == "Updated Address"),
-                    It.Is<decimal>(area => area == 250.0m)),
-                Times.Once);
+            // Verify outbox event was created
+            var outboxEvents = await context.OutboxEvents.ToListAsync();
+            Assert.Single(outboxEvents);
+            Assert.Equal("HouseUpdated", outboxEvents[0].EventType);
         }
 
         [Fact]
@@ -208,10 +203,10 @@ namespace HouseService.Tests.Controllers
             var deletedHouse = await context.Houses.FindAsync(1);
             Assert.Null(deletedHouse);
 
-            // Verify message was published
-            MockMessagePublisher.Verify(
-                x => x.PublishHouseDeletedAsync(It.Is<int>(id => id == 1)),
-                Times.Once);
+            // Verify outbox event was created
+            var outboxEvents = await context.OutboxEvents.ToListAsync();
+            Assert.Single(outboxEvents);
+            Assert.Equal("HouseDeleted", outboxEvents[0].EventType);
         }
 
         [Fact]
