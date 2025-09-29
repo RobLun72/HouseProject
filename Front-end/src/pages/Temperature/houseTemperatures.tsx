@@ -228,7 +228,7 @@ export function HouseTemperatures() {
                       {house.name}
                     </span>
                     <div className="text-sm text-gray-600">
-                      {house.area.toLocaleString()} sq ft • {house.rooms.length}{" "}
+                      {house.area.toLocaleString()} sq m • {house.rooms.length}{" "}
                       room{house.rooms.length !== 1 ? "s" : ""}
                     </div>
                   </div>
