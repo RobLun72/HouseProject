@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/select";
 import { useTemperatureApiEnvVariables } from "@/helpers/useTemperatureApiEnvVariables";
 
-interface House {
+interface HouseWithRooms {
   houseId: number;
   name: string;
   area: number;
+  rooms: Room[];
 }
 
 interface Room {
@@ -47,22 +48,36 @@ interface TemperatureFormData {
   date: string;
 }
 
+interface PageState {
+  housesWithRooms: HouseWithRooms[];
+  availableDates: AvailableDate[];
+  temperatures: Temperature[];
+  selectedHouseId: number | null;
+  selectedRoomId: number | null;
+  selectedDate: string | null;
+  selectedTemperature: Temperature | null;
+  loadingHousesWithRooms: boolean;
+  loadingDates: boolean;
+  loadingTemperatures: boolean;
+  showSuccessDialog: boolean;
+}
+
 export function ReportTemperature() {
   const { apiUrl, apiKey } = useTemperatureApiEnvVariables();
-  const [houses, setHouses] = useState<House[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
-  const [temperatures, setTemperatures] = useState<Temperature[]>([]);
-  const [selectedHouseId, setSelectedHouseId] = useState<number | null>(null);
-  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedTemperature, setSelectedTemperature] =
-    useState<Temperature | null>(null);
-  const [loadingHouses, setLoadingHouses] = useState(true);
-  const [loadingRooms, setLoadingRooms] = useState(false);
-  const [loadingDates, setLoadingDates] = useState(false);
-  const [loadingTemperatures, setLoadingTemperatures] = useState(false);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  const [pageState, setPageState] = useState<PageState>({
+    housesWithRooms: [],
+    availableDates: [],
+    temperatures: [],
+    selectedHouseId: null,
+    selectedRoomId: null,
+    selectedDate: null,
+    selectedTemperature: null,
+    loadingHousesWithRooms: true,
+    loadingDates: false,
+    loadingTemperatures: false,
+    showSuccessDialog: false,
+  });
 
   // Initialize React Hook Form
   const {
@@ -96,30 +111,34 @@ export function ReportTemperature() {
       }
 
       // Update the local temperatures array and re-sort by hour
-      setTemperatures((prev) =>
-        prev
-          .map((temp) =>
-            temp.tempId === data.tempId
-              ? { ...temp, hour: data.hour, degrees: data.degrees }
-              : temp
-          )
-          .sort((a, b) => a.hour - b.hour)
-      );
+      const updatedTemperatures = pageState.temperatures
+        .map((temp) =>
+          temp.tempId === data.tempId
+            ? { ...temp, hour: data.hour, degrees: data.degrees }
+            : temp
+        )
+        .sort((a, b) => a.hour - b.hour);
 
-      // Update the selected temperature
-      if (selectedTemperature && selectedTemperature.tempId === data.tempId) {
-        setSelectedTemperature({
-          ...selectedTemperature,
-          hour: data.hour,
-          degrees: data.degrees,
-        });
-      }
+      // Update the selected temperature if it matches
+      const updatedSelectedTemperature =
+        pageState.selectedTemperature &&
+        pageState.selectedTemperature.tempId === data.tempId
+          ? {
+              ...pageState.selectedTemperature,
+              hour: data.hour,
+              degrees: data.degrees,
+            }
+          : pageState.selectedTemperature;
+
+      setPageState((prev) => ({
+        ...prev,
+        temperatures: updatedTemperatures,
+        selectedTemperature: updatedSelectedTemperature,
+        showSuccessDialog: true,
+      }));
 
       // Reset form dirty state
       reset(data);
-
-      // Show success dialog
-      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error saving temperature:", error);
       alert("Failed to save temperature record. Please try again.");
@@ -128,14 +147,17 @@ export function ReportTemperature() {
 
   // Handle success dialog OK button
   const handleSuccessDialogOk = () => {
-    setShowSuccessDialog(false);
+    setPageState((prev) => ({
+      ...prev,
+      showSuccessDialog: false,
+    }));
   };
 
-  // Load all houses on component mount
+  // Load all houses with rooms on component mount
   useEffect(() => {
-    const fetchHouses = async () => {
+    const fetchHousesWithRooms = async () => {
       try {
-        const response = await fetch(`${apiUrl}/Houses`, {
+        const response = await fetch(`${apiUrl}/HousesWithRooms`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -144,69 +166,61 @@ export function ReportTemperature() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch houses");
+          throw new Error("Failed to fetch houses with rooms");
         }
 
         const result = await response.json();
-        // The TemperatureService returns a HousesResult object with a houses array (camelCase)
-        setHouses(result.houses || []);
+        // The TemperatureService returns a HousesWithRoomsResult object with a houses array (camelCase)
+        setPageState((prev) => ({
+          ...prev,
+          housesWithRooms: result.houses || [],
+          loadingHousesWithRooms: false,
+        }));
       } catch (error) {
-        console.error("Error fetching houses:", error);
-      } finally {
-        setLoadingHouses(false);
+        console.error("Error fetching houses with rooms:", error);
+        setPageState((prev) => ({
+          ...prev,
+          loadingHousesWithRooms: false,
+        }));
       }
     };
 
-    fetchHouses();
+    fetchHousesWithRooms();
   }, [apiUrl, apiKey]);
 
-  // Load rooms when a house is selected
-  useEffect(() => {
-    if (selectedHouseId) {
-      const fetchRooms = async () => {
-        setLoadingRooms(true);
-        try {
-          const response = await fetch(
-            `${apiUrl}/House/${selectedHouseId}/rooms`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Api-Key": apiKey,
-              },
-            }
-          );
+  const handleHouseChange = (value: string) => {
+    const houseId = parseInt(value);
+    setPageState((prev) => ({
+      ...prev,
+      selectedHouseId: houseId,
+      selectedRoomId: null, // Reset room selection when house changes
+      selectedDate: null, // Reset date selection when house changes
+      selectedTemperature: null,
+      availableDates: [],
+      temperatures: [],
+    }));
+  };
 
-          if (!response.ok) {
-            throw new Error("Failed to fetch rooms");
-          }
-
-          const result = await response.json();
-          // The TemperatureService returns a HouseRoomsResult object with a rooms array (camelCase)
-          setRooms(result.rooms || []);
-        } catch (error) {
-          console.error("Error fetching rooms:", error);
-          setRooms([]);
-        } finally {
-          setLoadingRooms(false);
-        }
-      };
-
-      fetchRooms();
-    } else {
-      setRooms([]);
-      setSelectedRoomId(null);
-    }
-  }, [selectedHouseId, apiUrl, apiKey]);
+  const handleRoomChange = (value: string) => {
+    const roomId = parseInt(value);
+    setPageState((prev) => ({
+      ...prev,
+      selectedRoomId: roomId,
+      selectedDate: null, // Reset date selection when room changes
+      selectedTemperature: null,
+      temperatures: [],
+    }));
+  };
 
   // Load available dates when a room is selected
   useEffect(() => {
-    if (selectedRoomId) {
+    if (pageState.selectedRoomId) {
       const fetchAvailableDates = async () => {
-        setLoadingDates(true);
+        setPageState((prev) => ({ ...prev, loadingDates: true }));
+
         try {
           const response = await fetch(
-            `${apiUrl}/Temperature/room/${selectedRoomId}/dates`,
+            `${apiUrl}/Temperature/room/${pageState.selectedRoomId}/dates`,
             {
               method: "GET",
               headers: {
@@ -233,30 +247,40 @@ export function ReportTemperature() {
             }),
           }));
 
-          setAvailableDates(formattedDates);
+          setPageState((prev) => ({
+            ...prev,
+            availableDates: formattedDates,
+            loadingDates: false,
+          }));
         } catch (error) {
           console.error("Error fetching available dates:", error);
-          setAvailableDates([]);
-        } finally {
-          setLoadingDates(false);
+          setPageState((prev) => ({
+            ...prev,
+            availableDates: [],
+            loadingDates: false,
+          }));
         }
       };
 
       fetchAvailableDates();
     } else {
-      setAvailableDates([]);
-      setSelectedDate(null);
+      setPageState((prev) => ({
+        ...prev,
+        availableDates: [],
+        selectedDate: null,
+      }));
     }
-  }, [selectedRoomId, apiUrl, apiKey]);
+  }, [pageState.selectedRoomId, apiUrl, apiKey]);
 
   // Load temperature records when date is selected
   useEffect(() => {
-    if (selectedRoomId && selectedDate) {
+    if (pageState.selectedRoomId && pageState.selectedDate) {
       const fetchTemperatures = async () => {
-        setLoadingTemperatures(true);
+        setPageState((prev) => ({ ...prev, loadingTemperatures: true }));
+
         try {
           const response = await fetch(
-            `${apiUrl}/Temperature/room/${selectedRoomId}/date/${selectedDate}`,
+            `${apiUrl}/Temperature/room/${pageState.selectedRoomId}/date/${pageState.selectedDate}`,
             {
               method: "GET",
               headers: {
@@ -275,40 +299,45 @@ export function ReportTemperature() {
           const sortedTemperatures = temperatureRecords.sort(
             (a, b) => a.hour - b.hour
           );
-          setTemperatures(sortedTemperatures);
+
+          setPageState((prev) => ({
+            ...prev,
+            temperatures: sortedTemperatures,
+            loadingTemperatures: false,
+          }));
         } catch (error) {
           console.error("Error fetching temperature records:", error);
-          setTemperatures([]);
-        } finally {
-          setLoadingTemperatures(false);
+          setPageState((prev) => ({
+            ...prev,
+            temperatures: [],
+            loadingTemperatures: false,
+          }));
         }
       };
 
       fetchTemperatures();
     } else {
-      setTemperatures([]);
-      setSelectedTemperature(null);
+      setPageState((prev) => ({
+        ...prev,
+        temperatures: [],
+        selectedTemperature: null,
+      }));
     }
-  }, [selectedRoomId, selectedDate, apiUrl, apiKey]);
-
-  const handleHouseChange = (value: string) => {
-    const houseId = parseInt(value);
-    setSelectedHouseId(houseId);
-    setSelectedRoomId(null); // Reset room selection when house changes
-  };
-
-  const handleRoomChange = (value: string) => {
-    const roomId = parseInt(value);
-    setSelectedRoomId(roomId);
-    setSelectedDate(null); // Reset date selection when room changes
-  };
+  }, [pageState.selectedRoomId, pageState.selectedDate, apiUrl, apiKey]);
 
   const handleDateChange = (value: string) => {
-    setSelectedDate(value);
+    setPageState((prev) => ({
+      ...prev,
+      selectedDate: value,
+      selectedTemperature: null,
+    }));
   };
 
   const handleTemperatureSelect = (temperature: Temperature) => {
-    setSelectedTemperature(temperature);
+    setPageState((prev) => ({
+      ...prev,
+      selectedTemperature: temperature,
+    }));
     // Populate the form with the selected temperature data
     setValue("tempId", temperature.tempId);
     setValue("roomId", temperature.roomId);
@@ -318,11 +347,11 @@ export function ReportTemperature() {
   };
 
   const handleCreateNewTemperature = async () => {
-    if (!selectedRoomId || !selectedDate) return;
+    if (!pageState.selectedRoomId || !pageState.selectedDate) return;
 
     try {
       // Find a suitable hour that doesn't exist yet
-      const existingHours = temperatures
+      const existingHours = pageState.temperatures
         .map((temp) => temp.hour)
         .sort((a, b) => a - b);
       let newHour = 0;
@@ -337,7 +366,7 @@ export function ReportTemperature() {
 
       // Format the date properly as ISO string
       const formattedDate = new Date(
-        selectedDate + "T00:00:00.000Z"
+        pageState.selectedDate + "T00:00:00.000Z"
       ).toISOString();
 
       const response = await fetch(`${apiUrl}/Temperature`, {
@@ -347,7 +376,7 @@ export function ReportTemperature() {
           "X-Api-Key": apiKey,
         },
         body: JSON.stringify({
-          roomId: selectedRoomId,
+          roomId: pageState.selectedRoomId,
           hour: newHour,
           degrees: 20.0, // Default temperature
           date: formattedDate,
@@ -363,13 +392,19 @@ export function ReportTemperature() {
 
       const newTemperature = await response.json();
 
-      // Update local temperatures array
-      setTemperatures((prev) =>
-        [...prev, newTemperature].sort((a, b) => a.hour - b.hour)
-      );
+      // Update local temperatures array and set as selected
+      const updatedTemperatures = [
+        ...pageState.temperatures,
+        newTemperature,
+      ].sort((a, b) => a.hour - b.hour);
 
-      // Select the new temperature record
-      setSelectedTemperature(newTemperature);
+      setPageState((prev) => ({
+        ...prev,
+        temperatures: updatedTemperatures,
+        selectedTemperature: newTemperature,
+      }));
+
+      // Populate form with new temperature
       setValue("tempId", newTemperature.tempId);
       setValue("roomId", newTemperature.roomId);
       setValue("hour", newTemperature.hour);
@@ -402,19 +437,21 @@ export function ReportTemperature() {
               Select House
             </label>
             <Select
-              value={selectedHouseId?.toString() || ""}
+              value={pageState.selectedHouseId?.toString() || ""}
               onValueChange={handleHouseChange}
-              disabled={loadingHouses}
+              disabled={pageState.loadingHousesWithRooms}
             >
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    loadingHouses ? "Loading houses..." : "Choose a house"
+                    pageState.loadingHousesWithRooms
+                      ? "Loading houses..."
+                      : "Choose a house"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                {houses.map((house) => (
+                {pageState.housesWithRooms.map((house) => (
                   <SelectItem
                     key={house.houseId}
                     value={house.houseId.toString()}
@@ -432,29 +469,40 @@ export function ReportTemperature() {
               Select Room
             </label>
             <Select
-              value={selectedRoomId?.toString() || ""}
+              value={pageState.selectedRoomId?.toString() || ""}
               onValueChange={handleRoomChange}
-              disabled={!selectedHouseId || loadingRooms || rooms.length === 0}
+              disabled={
+                !pageState.selectedHouseId ||
+                !pageState.housesWithRooms.find(
+                  (h) => h.houseId === pageState.selectedHouseId
+                )?.rooms.length
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    !selectedHouseId
+                    !pageState.selectedHouseId
                       ? "Select a house first"
-                      : loadingRooms
-                      ? "Loading rooms..."
-                      : rooms.length === 0
+                      : !pageState.housesWithRooms.find(
+                          (h) => h.houseId === pageState.selectedHouseId
+                        )?.rooms.length
                       ? "No rooms available"
                       : "Choose a room"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                {rooms.map((room) => (
-                  <SelectItem key={room.roomId} value={room.roomId.toString()}>
-                    {room.name}
-                  </SelectItem>
-                ))}
+                {pageState.selectedHouseId &&
+                  pageState.housesWithRooms
+                    .find((h) => h.houseId === pageState.selectedHouseId)
+                    ?.rooms.map((room) => (
+                      <SelectItem
+                        key={room.roomId}
+                        value={room.roomId.toString()}
+                      >
+                        {room.name}
+                      </SelectItem>
+                    ))}
               </SelectContent>
             </Select>
           </div>
@@ -465,27 +513,29 @@ export function ReportTemperature() {
               Select Date
             </label>
             <Select
-              value={selectedDate || ""}
+              value={pageState.selectedDate || ""}
               onValueChange={handleDateChange}
               disabled={
-                !selectedRoomId || loadingDates || availableDates.length === 0
+                !pageState.selectedRoomId ||
+                pageState.loadingDates ||
+                pageState.availableDates.length === 0
               }
             >
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    !selectedRoomId
+                    !pageState.selectedRoomId
                       ? "Select a room first"
-                      : loadingDates
+                      : pageState.loadingDates
                       ? "Loading dates..."
-                      : availableDates.length === 0
+                      : pageState.availableDates.length === 0
                       ? "No dates available"
                       : "Choose a date"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                {availableDates.map((dateObj) => (
+                {pageState.availableDates.map((dateObj) => (
                   <SelectItem key={dateObj.date} value={dateObj.date}>
                     {dateObj.displayDate}
                   </SelectItem>
@@ -496,9 +546,9 @@ export function ReportTemperature() {
         </div>
 
         {/* Temperature Time Buttons */}
-        {selectedDate && temperatures.length > 0 && (
+        {pageState.selectedDate && pageState.temperatures.length > 0 && (
           <div className="space-y-4">
-            {loadingTemperatures ? (
+            {pageState.loadingTemperatures ? (
               <div className="flex justify-center py-4">
                 <div className="text-sm text-gray-500">
                   Loading temperature records...
@@ -508,12 +558,12 @@ export function ReportTemperature() {
               <div className="space-y-4">
                 {/* Horizontal Button Strip */}
                 <div className="flex flex-wrap gap-2">
-                  {temperatures.map((temp) => (
+                  {pageState.temperatures.map((temp) => (
                     <button
                       key={temp.tempId}
                       onClick={() => handleTemperatureSelect(temp)}
                       className={`px-4 py-2 text-sm font-medium transition-all relative ${
-                        selectedTemperature?.tempId === temp.tempId
+                        pageState.selectedTemperature?.tempId === temp.tempId
                           ? "bg-white text-gray-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-app-primary"
                           : "bg-white text-gray-700 hover:bg-gray-50"
                       }`}
@@ -533,7 +583,7 @@ export function ReportTemperature() {
                 </div>
 
                 {/* Temperature Record Form */}
-                {selectedTemperature && (
+                {pageState.selectedTemperature && (
                   <div className="bg-gray-50 p-6 rounded-lg border">
                     <h4 className="text-md font-medium text-gray-900 mb-4">
                       Temperature Record Details
@@ -627,16 +677,18 @@ export function ReportTemperature() {
         )}
 
         {/* Empty State Message */}
-        {selectedDate && temperatures.length === 0 && !loadingTemperatures && (
-          <div className="text-center py-8">
-            <p className="text-gray-500">
-              No temperature records found for the selected date.
-            </p>
-          </div>
-        )}
+        {pageState.selectedDate &&
+          pageState.temperatures.length === 0 &&
+          !pageState.loadingTemperatures && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">
+                No temperature records found for the selected date.
+              </p>
+            </div>
+          )}
 
         {/* Initial State Message */}
-        {!selectedDate && (
+        {!pageState.selectedDate && (
           <div className="border-t pt-4">
             <p className="text-sm text-gray-500 italic">
               Select a house, room, and date to view temperature records.
@@ -647,7 +699,7 @@ export function ReportTemperature() {
 
       {/* Success Dialog */}
       <ConfirmDialog
-        isOpen={showSuccessDialog}
+        isOpen={pageState.showSuccessDialog}
         title="Temperature Saved Successfully"
         description="The temperature record has been updated successfully."
         onOk={handleSuccessDialogOk}
