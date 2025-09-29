@@ -7,17 +7,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/Dialog/alert-dialog";
 import { HouseTemperaturesTable } from "./houseTemperaturesTable";
-import { RoomTemperaturesTable } from "./roomTemperaturesTable";
+import { RoomTemperatureDialog } from "./houseTemperaturesRoomTemperature";
 
 // TypeScript interfaces matching the TemperatureService API
 export interface Room {
@@ -36,14 +27,6 @@ export interface House {
   rooms: Room[];
 }
 
-export interface Temperature {
-  tempId: number;
-  roomId: number;
-  hour: number;
-  degrees: number;
-  date: string; // ISO date string from API
-}
-
 interface HousesWithRoomsResult {
   houses: House[];
 }
@@ -54,10 +37,9 @@ interface HouseTemperaturesState {
   error?: string;
   // Dialog state for room temperatures
   showRoomTempDialog: boolean;
-  roomTempLoading: boolean;
-  roomTempData: Temperature[];
+  selectedRoomId: number;
+  selectedHouseId: number;
   selectedRoomName: string;
-  roomTempError?: string;
 }
 
 export function HouseTemperatures() {
@@ -66,8 +48,8 @@ export function HouseTemperatures() {
     houses: [],
     // Dialog state initialization
     showRoomTempDialog: false,
-    roomTempLoading: false,
-    roomTempData: [],
+    selectedRoomId: 0,
+    selectedHouseId: 0,
     selectedRoomName: "",
   });
 
@@ -80,52 +62,14 @@ export function HouseTemperatures() {
     const room = house?.rooms.find((r) => r.roomId === roomId);
     const roomName = room?.name || `Room ${roomId}`;
 
-    // Set loading state and show dialog
+    // Set dialog state and show dialog
     setPageState((prev) => ({
       ...prev,
       showRoomTempDialog: true,
-      roomTempLoading: true,
+      selectedRoomId: roomId,
+      selectedHouseId: houseId,
       selectedRoomName: roomName,
-      roomTempData: [],
-      roomTempError: undefined,
     }));
-
-    try {
-      // Get current date in YYYY-MM-DD format
-      const today = new Date();
-      const dateStr = today.toISOString().split("T")[0];
-
-      const response = await fetch(
-        `${apiUrl}/Temperature/room/${roomId}/date/${dateStr}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Api-Key": apiKey,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to load room temperatures: ${response.status}`);
-      }
-
-      const temperatures: Temperature[] = await response.json();
-
-      setPageState((prev) => ({
-        ...prev,
-        roomTempLoading: false,
-        roomTempData: temperatures,
-      }));
-    } catch (error) {
-      console.error("Error loading room temperatures:", error);
-      setPageState((prev) => ({
-        ...prev,
-        roomTempLoading: false,
-        roomTempError:
-          error instanceof Error ? error.message : "An unknown error occurred",
-      }));
-    }
   };
 
   // Handle closing room temperature dialog
@@ -133,9 +77,9 @@ export function HouseTemperatures() {
     setPageState((prev) => ({
       ...prev,
       showRoomTempDialog: false,
-      roomTempData: [],
+      selectedRoomId: 0,
+      selectedHouseId: 0,
       selectedRoomName: "",
-      roomTempError: undefined,
     }));
   };
 
@@ -257,44 +201,12 @@ export function HouseTemperatures() {
         )}
 
       {/* Room Temperature Dialog */}
-      <AlertDialog open={pageState.showRoomTempDialog}>
-        <AlertDialogContent className="max-w-4xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Temperature Readings - {pageState.selectedRoomName}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pageState.roomTempLoading
-                ? "Loading temperature data..."
-                : pageState.roomTempError
-                ? `Error: ${pageState.roomTempError}`
-                : pageState.roomTempData.length === 0
-                ? "No temperature readings found for today."
-                : `Showing ${
-                    pageState.roomTempData.length
-                  } temperature readings for ${new Date().toLocaleDateString()}`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {/* Table Content */}
-          {!pageState.roomTempLoading &&
-            !pageState.roomTempError &&
-            pageState.roomTempData.length > 0 && (
-              <div className="mt-4">
-                <RoomTemperaturesTable
-                  temperatures={pageState.roomTempData}
-                  roomName={pageState.selectedRoomName}
-                />
-              </div>
-            )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCloseRoomTempDialog}>
-              Close
-            </AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <RoomTemperatureDialog
+        isOpen={pageState.showRoomTempDialog}
+        onClose={handleCloseRoomTempDialog}
+        roomId={pageState.selectedRoomId}
+        roomName={pageState.selectedRoomName}
+      />
     </div>
   );
 }
