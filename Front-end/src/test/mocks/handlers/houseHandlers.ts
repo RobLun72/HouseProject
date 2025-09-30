@@ -5,7 +5,7 @@ const API_BASE_URL = "http://localhost:5001/api";
 
 export const houseHandlers = [
   // Get all houses
-  http.get(`${API_BASE_URL}/houses`, () => {
+  http.get(`${API_BASE_URL}/House`, () => {
     try {
       const houses = DatabaseQueries.getAllHouses();
       return HttpResponse.json(houses);
@@ -33,7 +33,7 @@ export const houseHandlers = [
   }),
 
   // Get single house by ID
-  http.get(`${API_BASE_URL}/houses/:id`, ({ params }) => {
+  http.get(`${API_BASE_URL}/House/:id`, ({ params }) => {
     try {
       const houseId = params.id as string;
 
@@ -61,7 +61,7 @@ export const houseHandlers = [
   }),
 
   // Create new house
-  http.post(`${API_BASE_URL}/houses`, async ({ request }) => {
+  http.post(`${API_BASE_URL}/House`, async ({ request }) => {
     try {
       const body = (await request.json()) as Record<string, unknown>;
 
@@ -76,6 +76,7 @@ export const houseHandlers = [
       const newHouse = DatabaseQueries.createHouse({
         name: body.name as string,
         address: (body.address as string) || null,
+        area: (body.area as number) || 0,
       });
 
       return HttpResponse.json(newHouse, { status: 201 });
@@ -89,7 +90,7 @@ export const houseHandlers = [
   }),
 
   // Update house
-  http.put(`${API_BASE_URL}/houses/:id`, async ({ params, request }) => {
+  http.put(`${API_BASE_URL}/House/:id`, async ({ params, request }) => {
     try {
       const houseId = params.id as string;
       const body = (await request.json()) as Record<string, unknown>;
@@ -112,6 +113,7 @@ export const houseHandlers = [
       const updatedHouse = DatabaseQueries.updateHouse(Number(houseId), {
         name: body.name as string,
         address: (body.address as string) || null,
+        area: (body.area as number) || 0,
       });
 
       return HttpResponse.json(updatedHouse);
@@ -128,7 +130,7 @@ export const houseHandlers = [
   }),
 
   // Delete house
-  http.delete(`${API_BASE_URL}/houses/:id`, ({ params }) => {
+  http.delete(`${API_BASE_URL}/House/:id`, ({ params }) => {
     try {
       const houseId = params.id as string;
 

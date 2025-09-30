@@ -22,6 +22,7 @@ export const db = factory({
     houseId: primaryKey(() => houseIdCounter++),
     name: () => "",
     address: nullable(() => ""),
+    area: () => 0,
     createdAt: () => new Date().toISOString(),
     updatedAt: () => new Date().toISOString(),
   },

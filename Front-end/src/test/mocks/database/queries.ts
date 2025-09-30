@@ -128,9 +128,14 @@ export class DatabaseQueries {
   }
 
   // House CRUD operations
-  static createHouse(data: { name: string; address?: string | null }) {
+  static createHouse(data: {
+    name: string;
+    address?: string | null;
+    area?: number;
+  }) {
     const house = db.house.create({
       ...data,
+      area: data.area || 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -146,6 +151,7 @@ export class DatabaseQueries {
     updates: {
       name?: string;
       address?: string | null;
+      area?: number;
     }
   ) {
     const existing = db.house.findFirst({

@@ -18,11 +18,13 @@ export class ComponentTestHelpers {
     const mainHouse = DatabaseQueries.createHouse({
       name: "Main House",
       address: "123 Main Street",
+      area: 200,
     });
 
     const guestHouse = DatabaseQueries.createHouse({
       name: "Guest House",
       address: "456 Guest Lane",
+      area: 100,
     });
 
     // Create rooms for main house
@@ -140,6 +142,7 @@ export class ComponentTestHelpers {
     const house = DatabaseQueries.createHouse({
       name: "Test House",
       address: "789 Test Avenue",
+      area: 150,
     });
 
     const room = DatabaseQueries.createRoom({
@@ -173,6 +176,7 @@ export class ComponentTestHelpers {
     const house = DatabaseQueries.createHouse({
       name: "This is a very long house name that might cause display issues in the UI components",
       address: "123 Very Long Address Name That Might Overflow Street",
+      area: 300,
     });
 
     // Room with special characters
