@@ -20,83 +20,6 @@ namespace TemperatureService.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Temperature>>> GetTemperatures([FromQuery] DateTime? date = null, [FromQuery] int? roomId = null)
-        {
-            var query = _context.Temperatures.AsQueryable();
-            
-            if (date.HasValue)
-            {
-                query = query.Where(t => t.Date.Date == date.Value.Date);
-            }
-            
-            if (roomId.HasValue)
-            {
-                query = query.Where(t => t.RoomId == roomId.Value);
-            }
-            
-            return Ok(await query.OrderBy(t => t.Date).ThenBy(t => t.Hour).ToListAsync());
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Temperature>> GetTemperature(int id)
-        {
-            var temperature = await _context.Temperatures.FindAsync(id);
-            if (temperature == null)
-            {
-                return NotFound();
-            }
-            return Ok(temperature);
-        }
-
-        [HttpGet("room/{roomId}")]
-        public async Task<ActionResult<IEnumerable<Temperature>>> GetTemperaturesByRoom(int roomId, [FromQuery] DateTime? date = null)
-        {
-            var query = _context.Temperatures.Where(t => t.RoomId == roomId);
-            
-            if (date.HasValue)
-            {
-                query = query.Where(t => t.Date.Date == date.Value.Date);
-            }
-            
-            var temperatures = await query.OrderBy(t => t.Date).ThenBy(t => t.Hour).ToListAsync();
-            return Ok(temperatures);
-        }
-
-        [HttpGet("room/{roomId}/hour/{hour}")]
-        public async Task<ActionResult<Temperature>> GetTemperatureByRoomAndHour(int roomId, int hour, [FromQuery] DateTime? date = null)
-        {
-            var query = _context.Temperatures.Where(t => t.RoomId == roomId && t.Hour == hour);
-            
-            if (date.HasValue)
-            {
-                query = query.Where(t => t.Date.Date == date.Value.Date);
-            }
-            else
-            {
-                // If no date specified, get the most recent reading
-                query = query.OrderByDescending(t => t.Date);
-            }
-            
-            var temperature = await query.FirstOrDefaultAsync();
-            if (temperature == null)
-            {
-                return NotFound();
-            }
-            return Ok(temperature);
-        }
-
-        [HttpGet("date/{date:datetime}")]
-        public async Task<ActionResult<IEnumerable<Temperature>>> GetTemperaturesByDate(DateTime date)
-        {
-            var temperatures = await _context.Temperatures
-                .Where(t => t.Date.Date == date.Date)
-                .OrderBy(t => t.RoomId)
-                .ThenBy(t => t.Hour)
-                .ToListAsync();
-            return Ok(temperatures);
-        }
-
         [HttpGet("room/{roomId}/date/{date:datetime}")]
         public async Task<ActionResult<IEnumerable<Temperature>>> GetTemperaturesByRoomAndDate(int roomId, DateTime date)
         {
@@ -119,18 +42,6 @@ namespace TemperatureService.Controllers
                 _logger.LogError(ex, "Error retrieving temperatures for room {RoomId} on date {Date}", roomId, date);
                 return StatusCode(500, new { error = "Internal server error occurred while retrieving temperature data", details = ex.Message });
             }
-        }
-
-        [HttpGet("room/{roomId}/date/{date:datetime}/hour/{hour}")]
-        public async Task<ActionResult<Temperature>> GetTemperatureByRoomDateAndHour(int roomId, DateTime date, int hour)
-        {
-            var temperature = await _context.Temperatures
-                .FirstOrDefaultAsync(t => t.RoomId == roomId && t.Date.Date == date.Date && t.Hour == hour);
-            if (temperature == null)
-            {
-                return NotFound();
-            }
-            return Ok(temperature);
         }
 
         [HttpGet("room/{roomId}/dates")]
@@ -187,7 +98,7 @@ namespace TemperatureService.Controllers
 
             _context.Temperatures.Add(temperature);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetTemperature), new { id = temperature.TempId }, temperature);
+            return Created($"/Temperature/{temperature.TempId}", temperature);
         }
 
         [HttpPut("{id}")]

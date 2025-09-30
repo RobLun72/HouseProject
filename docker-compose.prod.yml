@@ -1,0 +1,39 @@
+# Production Docker Compose Override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      target: production # Use production nginx target
+    environment:
+      # Production environment variables
+      - NODE_ENV=production
+      # API URLs should point to production backend services
+      - VITE_HOUSE_API_URL=https://house-service:443
+      - VITE_TEMPERATURE_API_URL=https://temperature-service:443
+    ports:
+      - "3000:3000" # Distroless static server port for production
+    volumes: [] # No volume mounts in production
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/nodejs/bin/node",
+          "-e",
+          "require('http').get('http://localhost:3000/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      # Resource limits following Infrastructure-Agent.md patterns
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.25"

@@ -4,7 +4,7 @@ import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { DataTable } from "../../components/ui/DataTable/DataTable";
 import { useResponsive } from "@/helpers/useResponsive";
 import { useLocation } from "react-router-dom";
-import type { Temperature } from "./houseTemperatures";
+import type { Temperature } from "./houseTemperaturesRoomTemperature";
 
 export function RoomTemperaturesTable({
   temperatures,

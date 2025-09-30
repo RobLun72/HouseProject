@@ -107,6 +107,45 @@ services:
       - messaging-network
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./Front-end
+      dockerfile: Dockerfile
+      target: development # Use development target for local development
+    container_name: house-frontend
+    environment:
+      # Environment configuration following Infrastructure-Agent.md hierarchy
+      - NODE_ENV=development
+      - VITE_HOUSE_API_URL=https://localhost:7001
+      - VITE_TEMPERATURE_API_URL=https://localhost:7002
+      - VITE_HOUSE_API_KEY=dev-key-123456789
+      - VITE_TEMPERATURE_API_KEY=dev-key-123456789
+    ports:
+      - "3000:3000" # Vite dev server port
+    volumes:
+      # Volume mounts for hot reload during development (per Infrastructure-Agent.md)
+      - ./Front-end:/app
+      - /app/node_modules # Anonymous volume for node_modules performance
+    depends_on:
+      - house-service
+      - temperature-service
+    networks:
+      - house-network
+      - temperature-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 volumes:
   postgres_data:
   house_postgres_data:
