@@ -12,7 +12,11 @@ export const houseHandlers = [
 
     try {
       const houses = DatabaseQueries.getAllHouses();
-      console.log("📦 MSW Test Handler returning houses:", houses.length, "houses");
+      console.log(
+        "📦 MSW Test Handler returning houses:",
+        houses.length,
+        "houses"
+      );
       return HttpResponse.json(houses);
     } catch (error) {
       console.error("Houses fetch error:", error);
