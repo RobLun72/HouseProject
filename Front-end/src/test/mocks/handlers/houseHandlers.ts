@@ -1,13 +1,18 @@
 import { http, HttpResponse } from "msw";
 import { DatabaseQueries } from "../database/queries";
+import { applyDevDelay } from "../../../mocks/utils";
 
-const API_BASE_URL = "http://localhost:5001/api";
+const API_BASE_URL = "https://localhost:7001";
 
 export const houseHandlers = [
   // Get all houses
-  http.get(`${API_BASE_URL}/House`, () => {
+  http.get(`${API_BASE_URL}/House`, async () => {
+    console.log("🎯 MSW Test Handler intercepted GET /House request");
+    await applyDevDelay();
+
     try {
       const houses = DatabaseQueries.getAllHouses();
+      console.log("📦 MSW Test Handler returning houses:", houses.length, "houses");
       return HttpResponse.json(houses);
     } catch (error) {
       console.error("Houses fetch error:", error);
@@ -19,7 +24,9 @@ export const houseHandlers = [
   }),
 
   // Get houses with rooms
-  http.get(`${API_BASE_URL}/houses/with-rooms`, () => {
+  http.get(`${API_BASE_URL}/houses/with-rooms`, async () => {
+    await applyDevDelay();
+
     try {
       const housesWithRooms = DatabaseQueries.getHousesWithRooms();
       return HttpResponse.json(housesWithRooms);

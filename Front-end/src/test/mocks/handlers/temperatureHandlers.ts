@@ -1,14 +1,18 @@
 import { HttpResponse, http } from "msw";
 import { DatabaseQueries } from "../database/queries";
+import { applyDevDelay } from "../../../mocks/utils";
 
-const API_BASE = "http://localhost:5001/api";
+const API_BASE = "https://localhost:7002";
+const EXPECTED_API_KEY = "dev-key-123456789";
 
 export const temperatureHandlers = [
   // GET /HousesWithRooms - Now powered by database
-  http.get(`${API_BASE}/HousesWithRooms`, ({ request }) => {
+  http.get(`${API_BASE}/HousesWithRooms`, async ({ request }) => {
+    await applyDevDelay();
+
     const apiKey = request.headers.get("X-Api-Key");
 
-    if (!apiKey || apiKey !== "test-api-key") {
+    if (!apiKey || apiKey !== EXPECTED_API_KEY) {
       return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -31,7 +35,7 @@ export const temperatureHandlers = [
       const apiKey = request.headers.get("X-Api-Key");
       const roomId = parseInt(params.roomId as string);
 
-      if (!apiKey || apiKey !== "test-api-key") {
+      if (!apiKey || apiKey !== EXPECTED_API_KEY) {
         return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
@@ -60,7 +64,7 @@ export const temperatureHandlers = [
       const roomId = parseInt(params.roomId as string);
       const date = params.date as string;
 
-      if (!apiKey || apiKey !== "test-api-key") {
+      if (!apiKey || apiKey !== EXPECTED_API_KEY) {
         return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
@@ -97,7 +101,7 @@ export const temperatureHandlers = [
     const apiKey = request.headers.get("X-Api-Key");
     const tempId = parseInt(params.tempId as string);
 
-    if (!apiKey || apiKey !== "test-api-key") {
+    if (!apiKey || apiKey !== EXPECTED_API_KEY) {
       return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -146,7 +150,7 @@ export const temperatureHandlers = [
   http.post(`${API_BASE}/Temperature`, async ({ request }) => {
     const apiKey = request.headers.get("X-Api-Key");
 
-    if (!apiKey || apiKey !== "test-api-key") {
+    if (!apiKey || apiKey !== EXPECTED_API_KEY) {
       return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -190,7 +194,7 @@ export const temperatureHandlers = [
     const apiKey = request.headers.get("X-Api-Key");
     const tempId = parseInt(params.tempId as string);
 
-    if (!apiKey || apiKey !== "test-api-key") {
+    if (!apiKey || apiKey !== EXPECTED_API_KEY) {
       return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -229,7 +233,7 @@ export const temperatureHandlers = [
       const startDate = url.searchParams.get("startDate");
       const endDate = url.searchParams.get("endDate");
 
-      if (!apiKey || apiKey !== "test-api-key") {
+      if (!apiKey || apiKey !== EXPECTED_API_KEY) {
         return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 

@@ -18,8 +18,8 @@ import userEvent from "@testing-library/user-event";
 // Mock the environment variables
 vi.mock("@/helpers/useApiEnvVariables", () => ({
   useApiEnvVariables: () => ({
-    apiUrl: "http://localhost:5001/api",
-    apiKey: "test-api-key",
+    apiUrl: "https://localhost:7001",
+    apiKey: "dev-key-123456789",
   }),
 }));
 
@@ -360,12 +360,12 @@ describe("Room Integration Tests", () => {
 
       // Simulate the delete API call that would be triggered by the UI
       const response = await fetch(
-        `http://localhost:5001/api/Room/${roomToDelete.roomId}`,
+        `https://localhost:7001/Room/${roomToDelete.roomId}`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "X-Api-Key": "test-api-key",
+            "X-Api-Key": "dev-key-123456789",
           },
         }
       );
@@ -460,12 +460,12 @@ describe("Room Integration Tests", () => {
 
       // Simulate the slow delete API call
       const deletePromise = fetch(
-        `http://localhost:5001/api/Room/${room.roomId}`,
+        `https://localhost:7001/Room/${room.roomId}`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "X-Api-Key": "test-api-key",
+            "X-Api-Key": "dev-key-123456789",
           },
         }
       );

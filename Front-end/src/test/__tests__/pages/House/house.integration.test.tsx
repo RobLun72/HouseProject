@@ -12,8 +12,8 @@ import userEvent from "@testing-library/user-event";
 // Mock the environment variables
 vi.mock("@/helpers/useApiEnvVariables", () => ({
   useApiEnvVariables: () => ({
-    apiUrl: "http://localhost:5001/api",
-    apiKey: "test-api-key",
+    apiUrl: "https://localhost:7001",
+    apiKey: "dev-key-123456789",
   }),
 }));
 
@@ -162,6 +162,11 @@ describe("House Integration Tests", () => {
         expect(screen.queryByText("Add New House")).not.toBeInTheDocument();
       });
 
+      // Wait for houses to load after navigation
+      await waitFor(() => {
+        expect(screen.queryByText("Loading houses...")).not.toBeInTheDocument();
+      });
+
       // Verify both existing and new houses are displayed
       expect(screen.getByText("Existing House")).toBeInTheDocument();
       expect(screen.getByText("New Test House")).toBeInTheDocument();
@@ -284,6 +289,11 @@ describe("House Integration Tests", () => {
         expect(screen.queryByText("Edit House")).not.toBeInTheDocument();
       });
 
+      // Wait for houses to load after navigation
+      await waitFor(() => {
+        expect(screen.queryByText("Loading houses...")).not.toBeInTheDocument();
+      });
+
       // Verify the house was updated in the list
       expect(screen.getByText("Updated House Name")).toBeInTheDocument();
       expect(screen.getByText("200")).toBeInTheDocument(); // Updated area
@@ -359,6 +369,11 @@ describe("House Integration Tests", () => {
         expect(screen.queryByText("Edit House")).not.toBeInTheDocument();
       });
 
+      // Wait for houses to load after navigation
+      await waitFor(() => {
+        expect(screen.queryByText("Loading houses...")).not.toBeInTheDocument();
+      });
+
       // Verify original house data is unchanged
       expect(screen.getByText("Test House")).toBeInTheDocument();
     });
@@ -386,12 +401,12 @@ describe("House Integration Tests", () => {
 
       // Simulate the delete API call that would be triggered by the UI
       const response = await fetch(
-        `http://localhost:5001/api/House/${house1.houseId}`,
+        `https://localhost:7001/House/${house1.houseId}`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "X-Api-Key": "test-api-key",
+            "X-Api-Key": "dev-key-123456789",
           },
         }
       );
@@ -478,12 +493,12 @@ describe("House Integration Tests", () => {
 
       // Simulate the slow delete API call
       const deletePromise = fetch(
-        `http://localhost:5001/api/House/${house.houseId}`,
+        `https://localhost:7001/House/${house.houseId}`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "X-Api-Key": "test-api-key",
+            "X-Api-Key": "dev-key-123456789",
           },
         }
       );

@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, setCountersAfterSeededData } from "./db";
 import { subDays, format } from "date-fns";
 import type { HouseData, RoomData } from "./types";
 
@@ -62,6 +62,9 @@ export function setupBaseDataWithTemperatures() {
   if (allRooms.length > 0) {
     seedTemperatureDataForRooms(allRooms);
   }
+
+  // Set ID counters to start after seeded data
+  setCountersAfterSeededData();
 }
 
 function seedTemperatureDataForRooms(rooms: { roomId: number }[]) {
@@ -189,6 +192,9 @@ export function seedTestDatabase() {
 
   // Create audit logs for actions
   seedAuditLogs([testUser, adminUser]);
+
+  // Set ID counters to start after seeded data
+  setCountersAfterSeededData();
 }
 
 function seedTemperatureData(rooms: { roomId: number }[]) {

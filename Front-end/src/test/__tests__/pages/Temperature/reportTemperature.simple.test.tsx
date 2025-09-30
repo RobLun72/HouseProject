@@ -8,8 +8,8 @@ import { DatabaseTestHelpers } from "../../../utils/database-helpers";
 // Mock the environment variables hook
 vi.mock("@/helpers/useTemperatureApiEnvVariables", () => ({
   useTemperatureApiEnvVariables: () => ({
-    apiUrl: "http://localhost:5001/api",
-    apiKey: "test-api-key",
+    apiUrl: "https://localhost:7002",
+    apiKey: "dev-key-123456789",
   }),
 }));
 

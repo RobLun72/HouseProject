@@ -1,11 +1,14 @@
 import { http, HttpResponse } from "msw";
 import { DatabaseQueries } from "../database/queries";
+import { applyDevDelay } from "../../../mocks/utils";
 
-const API_BASE = "http://localhost:5001/api";
+const API_BASE = "https://localhost:7001";
 
 export const roomHandlers = [
   // GET /Room/house/:houseId - Get rooms for a house
-  http.get(`${API_BASE}/Room/house/:houseId`, ({ params }) => {
+  http.get(`${API_BASE}/Room/house/:houseId`, async ({ params }) => {
+    await applyDevDelay();
+
     try {
       const houseId = params.houseId as string;
 
@@ -28,7 +31,9 @@ export const roomHandlers = [
   }),
 
   // GET /Room/:roomId - Get a specific room
-  http.get(`${API_BASE}/Room/:roomId`, ({ params }) => {
+  http.get(`${API_BASE}/Room/:roomId`, async ({ params }) => {
+    await applyDevDelay();
+
     try {
       const roomId = params.roomId as string;
 

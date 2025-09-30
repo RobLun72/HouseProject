@@ -21,10 +21,10 @@ afterAll(() => server.close());
 // Mock environment variables
 Object.defineProperty(import.meta, "env", {
   value: {
-    VITE_TEMPERATURE_API_URL: "http://localhost:5001/api",
-    VITE_TEMPERATURE_API_KEY: "test-api-key",
-    VITE_HOUSE_API_URL: "http://localhost:5000/api",
-    VITE_HOUSE_API_KEY: "test-house-api-key",
+    VITE_TEMPERATURE_API_URL: "https://localhost:7002",
+    VITE_TEMPERATURE_API_KEY: "dev-key-123456789",
+    VITE_HOUSE_API_URL: "https://localhost:7001",
+    VITE_HOUSE_API_KEY: "dev-key-123456789",
   },
   writable: true,
 });

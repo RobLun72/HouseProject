@@ -16,6 +16,38 @@ export function resetIdCounters() {
   auditLogIdCounter = 1;
 }
 
+// Set counters to start after existing seeded data
+export function setCountersAfterSeededData() {
+  // Find the highest existing IDs in the database
+  const houses = db.house.findMany({});
+  const rooms = db.room.findMany({});
+  const temperatures = db.temperature.findMany({});
+  const users = db.user.findMany({});
+  const auditLogs = db.auditLog.findMany({});
+
+  // Set counters to be one higher than the max existing ID
+  houseIdCounter =
+    houses.length > 0 ? Math.max(...houses.map((h) => h.houseId)) + 1 : 1;
+  roomIdCounter =
+    rooms.length > 0 ? Math.max(...rooms.map((r) => r.roomId)) + 1 : 1;
+  temperatureIdCounter =
+    temperatures.length > 0
+      ? Math.max(...temperatures.map((t) => t.tempId)) + 1
+      : 1;
+  userIdCounter =
+    users.length > 0 ? Math.max(...users.map((u) => u.userId)) + 1 : 1;
+  auditLogIdCounter =
+    auditLogs.length > 0 ? Math.max(...auditLogs.map((a) => a.logId)) + 1 : 1;
+
+  console.log("📊 MSW ID Counters set after seeded data:", {
+    houseIdCounter,
+    roomIdCounter,
+    temperatureIdCounter,
+    userIdCounter,
+    auditLogIdCounter,
+  });
+}
+
 // Define the database schema with relationships
 export const db = factory({
   house: {
