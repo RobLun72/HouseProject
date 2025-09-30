@@ -9,6 +9,12 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     css: true,
     globals: true,
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        execArgv: ["--no-warnings=ExperimentalWarning"],
+      },
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
