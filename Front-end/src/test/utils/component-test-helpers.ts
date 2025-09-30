@@ -122,6 +122,58 @@ export class ComponentTestHelpers {
   }
 
   /**
+   * Create room scenario for testing room components
+   */
+  static createRoomScenarioForTesting() {
+    DatabaseTestHelpers.clearDatabase();
+
+    // Create a test house first
+    const testHouse = DatabaseQueries.createHouse({
+      name: "Test House",
+      address: "123 Test Street",
+      area: 150,
+    });
+
+    // Create multiple rooms for the house
+    const livingRoom = DatabaseQueries.createRoom({
+      name: "Living Room",
+      houseId: testHouse.houseId,
+      type: "Living",
+      area: 40,
+      placement: "Ground Floor",
+    });
+
+    const kitchen = DatabaseQueries.createRoom({
+      name: "Kitchen",
+      houseId: testHouse.houseId,
+      type: "Cooking",
+      area: 25,
+      placement: "Ground Floor",
+    });
+
+    const bedroom = DatabaseQueries.createRoom({
+      name: "Master Bedroom",
+      houseId: testHouse.houseId,
+      type: "Bedroom",
+      area: 30,
+      placement: "First Floor",
+    });
+
+    const bathroom = DatabaseQueries.createRoom({
+      name: "Main Bathroom",
+      houseId: testHouse.houseId,
+      type: "Bathroom",
+      area: 10,
+      placement: "Ground Floor",
+    });
+
+    return {
+      house: testHouse,
+      rooms: [livingRoom, kitchen, bedroom, bathroom],
+    };
+  }
+
+  /**
    * Create empty scenario for testing empty states
    */
   static createEmptyScenario() {

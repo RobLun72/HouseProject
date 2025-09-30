@@ -206,9 +206,19 @@ export class DatabaseQueries {
   }
 
   // Room CRUD operations
-  static createRoom(data: { name: string; houseId: number }) {
+  static createRoom(data: {
+    name: string;
+    houseId: number;
+    type?: string;
+    area?: number;
+    placement?: string;
+  }) {
     const room = db.room.create({
-      ...data,
+      name: data.name,
+      houseId: data.houseId,
+      type: data.type || "General",
+      area: data.area || 0,
+      placement: data.placement || "Ground Floor",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -217,6 +227,67 @@ export class DatabaseQueries {
     this.createAuditLog("room", room.roomId, "create", data);
 
     return room;
+  }
+
+  static updateRoom(
+    roomId: number,
+    updates: {
+      name?: string;
+      type?: string;
+      area?: number;
+      placement?: string;
+    }
+  ) {
+    const existing = db.room.findFirst({
+      where: { roomId: { equals: roomId } },
+    });
+
+    if (!existing) {
+      throw new Error(`Room with ID ${roomId} not found`);
+    }
+
+    // Create audit log with before/after
+    this.createAuditLog("room", roomId, "update", {
+      before: JSON.parse(JSON.stringify(existing)),
+      after: updates,
+    });
+
+    return db.room.update({
+      where: { roomId: { equals: roomId } },
+      data: {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  }
+
+  static deleteRoom(roomId: number) {
+    const existing = db.room.findFirst({
+      where: { roomId: { equals: roomId } },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Room not found" };
+    }
+
+    // Delete related temperatures first
+    db.temperature.deleteMany({
+      where: {
+        roomId: { equals: roomId },
+      },
+    });
+
+    // Delete the room
+    const deleteResult = db.room.delete({
+      where: { roomId: { equals: roomId } },
+    });
+
+    // Create audit log
+    this.createAuditLog("room", roomId, "delete", {
+      deletedRecord: JSON.parse(JSON.stringify(existing)),
+    });
+
+    return { success: true, deletedRoom: deleteResult };
   }
 
   // Temperature CRUD operations with audit logging
