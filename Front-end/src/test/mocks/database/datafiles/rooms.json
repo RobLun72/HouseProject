@@ -1,0 +1,26 @@
+[
+  {
+    "roomId": 1,
+    "name": "Living Room",
+    "houseId": 1,
+    "type": "Living",
+    "area": 350,
+    "placement": "Ground Floor - Front"
+  },
+  {
+    "roomId": 2,
+    "name": "Master Bedroom",
+    "houseId": 1,
+    "type": "Bedroom",
+    "area": 280,
+    "placement": "Second Floor - Back"
+  },
+  {
+    "roomId": 3,
+    "name": "Studio Space",
+    "houseId": 2,
+    "type": "Living",
+    "area": 600,
+    "placement": "Single Floor - Open Plan"
+  }
+]

@@ -1,6 +1,10 @@
 // src/test/utils/database-helpers.ts
 import { DatabaseQueries } from "../mocks/database/queries";
 import { db, resetIdCounters } from "../mocks/database/db";
+import {
+  setupBaseData,
+  setupBaseDataWithTemperatures,
+} from "../mocks/database/seeders";
 
 export class DatabaseTestHelpers {
   /**
@@ -14,6 +18,20 @@ export class DatabaseTestHelpers {
     db.user.deleteMany({ where: {} });
     // Reset ID counters to ensure consistent IDs across test runs
     resetIdCounters();
+  }
+
+  /**
+   * Setup base test data from JSON files (3 houses, 3 rooms as specified)
+   */
+  static setupBaseData() {
+    setupBaseData();
+  }
+
+  /**
+   * Setup base test data with temperature readings
+   */
+  static setupBaseDataWithTemperatures() {
+    setupBaseDataWithTemperatures();
   }
 
   /**

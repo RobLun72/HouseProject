@@ -1,5 +1,100 @@
 import { db } from "./db";
 import { subDays, format } from "date-fns";
+import type { HouseData, RoomData } from "./types";
+
+// Import JSON data files
+import housesData from "./datafiles/houses.json";
+import roomsData from "./datafiles/rooms.json";
+
+export function setupBaseData() {
+  // Clear existing data
+  db.house.deleteMany({ where: {} });
+  db.room.deleteMany({ where: {} });
+  db.temperature.deleteMany({ where: {} });
+  db.user.deleteMany({ where: {} });
+  db.auditLog.deleteMany({ where: {} });
+
+  // Load houses from JSON file
+  (housesData as HouseData[]).forEach((houseData) => {
+    db.house.create({
+      houseId: houseData.houseId,
+      name: houseData.name,
+      address: houseData.address,
+    });
+  });
+
+  // Load rooms from JSON file
+  (roomsData as RoomData[]).forEach((roomData) => {
+    db.room.create({
+      roomId: roomData.roomId,
+      name: roomData.name,
+      houseId: roomData.houseId,
+      type: roomData.type,
+      area: roomData.area,
+      placement: roomData.placement,
+    });
+  });
+
+  // Create default test users
+  db.user.create({
+    userId: 1,
+    username: "testuser",
+    email: "test@example.com",
+    role: "user",
+  });
+
+  db.user.create({
+    userId: 2,
+    username: "admin",
+    email: "admin@example.com",
+    role: "admin",
+  });
+}
+
+export function setupBaseDataWithTemperatures() {
+  // First setup the base data
+  setupBaseData();
+
+  // Get all rooms from the loaded data
+  const allRooms = db.room.findMany({});
+
+  // Add temperature data for rooms that exist
+  if (allRooms.length > 0) {
+    seedTemperatureDataForRooms(allRooms);
+  }
+}
+
+function seedTemperatureDataForRooms(rooms: { roomId: number }[]) {
+  const today = new Date();
+  const dates = [
+    subDays(today, 2), // 2 days ago
+    subDays(today, 1), // yesterday
+    today, // today
+  ];
+
+  rooms.forEach((room) => {
+    dates.forEach((date) => {
+      const dateStr = format(date, "yyyy-MM-dd");
+
+      // Create temperature readings for morning, noon, evening, night
+      const hours = [8, 12, 18, 22]; // 8 AM, 12 PM, 6 PM, 10 PM
+
+      hours.forEach((hour) => {
+        // Generate realistic temperature variations
+        const baseTemp = 20 + Math.random() * 5; // 20-25°C base
+        const hourVariation = hour < 12 ? -2 : hour > 18 ? -1 : 2;
+        const degrees = Math.round((baseTemp + hourVariation) * 10) / 10;
+
+        db.temperature.create({
+          roomId: room.roomId,
+          hour,
+          degrees,
+          date: dateStr,
+        });
+      });
+    });
+  });
+}
 
 export function seedTestDatabase() {
   // Clear existing data
@@ -28,19 +123,19 @@ export function seedTestDatabase() {
   const house1 = db.house.create({
     houseId: 1,
     name: "Test House 1",
-    area: 1200,
+    address: "123 Main St",
   });
 
   const house2 = db.house.create({
     houseId: 2,
     name: "Test House 2",
-    area: 800,
+    address: "456 Oak Ave",
   });
 
   const house3 = db.house.create({
     houseId: 3,
     name: "Test House 3",
-    area: 1500,
+    address: "789 Pine Rd",
   });
 
   // Create rooms for houses
@@ -155,7 +250,7 @@ export function seedLargeDataset() {
     const house = db.house.create({
       houseId: h + 1000,
       name: `Performance Test House ${h}`,
-      area: 800 + Math.random() * 1000,
+      address: `${h * 100} Performance St`,
     });
 
     // 3-5 rooms per house
@@ -196,7 +291,7 @@ export function seedEdgeCaseData() {
   db.house.create({
     houseId: 9999,
     name: "Empty House",
-    area: 100,
+    address: "999 Empty St",
   });
 
   // Room with no temperature data
