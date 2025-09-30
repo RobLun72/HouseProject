@@ -73,6 +73,8 @@ describe("RoomTemperatureDialog", () => {
 - **User Interactions**: Clicks, form submissions, state changes
 - **API Integration**: Mocked HTTP calls and error scenarios
 - **State Management**: Proper state transitions
+- **Data Management**: MSW, In-memory db
+- **Test Code**: Make support methods for Arrange, Act and Assert to make the tests more readable
 
 ## 🛠️ Test Data Strategies
 
