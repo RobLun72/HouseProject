@@ -6,7 +6,7 @@ import { HouseAdd } from "@/pages/House/houseAdd";
 import { HouseEdit } from "@/pages/House/houseEdit";
 import { ComponentTestHelpers } from "@/test/utils/component-test-helpers";
 import { DatabaseTestHelpers } from "@/test/utils/database-helpers";
-import { DatabaseQueries } from "@/test/mocks/database/queries";
+import { DatabaseQueries } from "@/shared/mocks/database/queries";
 import userEvent from "@testing-library/user-event";
 
 // Mock the environment variables

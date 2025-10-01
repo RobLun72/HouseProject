@@ -40,7 +40,20 @@ export function Room() {
     isDeleting: false,
   });
 
+  console.log("Room component render - Current state:", {
+    loading: pageState.loading,
+    error: pageState.error,
+    houseId,
+    roomsCount: pageState.rooms.length,
+  });
+
   useEffect(() => {
+    console.log("useEffect triggered with:", {
+      houseId,
+      apiUrl: !!apiUrl,
+      apiKey: !!apiKey,
+    });
+
     async function fetchRooms() {
       if (!houseId) {
         setPageState((prevState) => ({
@@ -94,29 +107,49 @@ export function Room() {
         }));
       } catch (error) {
         console.error("Error fetching rooms:", error);
-        setPageState((prevState) => ({
-          ...prevState,
-          loading: false,
-          rooms: [],
-          error:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-        }));
+        console.log(
+          "useEffect fetchRooms: Error occurred, setting error state"
+        );
+        try {
+          setPageState((prevState) => {
+            const newState = {
+              ...prevState,
+              loading: false,
+              rooms: [],
+              houseName: "",
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "An unknown error occurred",
+            };
+            console.log("useEffect fetchRooms: New state:", newState);
+            return newState;
+          });
+          console.log("useEffect fetchRooms: State update completed");
+        } catch (stateError) {
+          console.error("Error updating state:", stateError);
+        }
       }
     }
 
-    if (pageState.loading && pageState.rooms.length === 0 && !pageState.error) {
+    // Simplified logic: always fetch when houseId or apiUrl changes, regardless of state
+    if (houseId && apiUrl && apiKey) {
+      console.log("useEffect: Starting fetchRooms for houseId:", houseId);
+      // Reset loading state before fetching
+      setPageState((prevState) => ({
+        ...prevState,
+        loading: true,
+        error: undefined,
+      }));
       fetchRooms();
+    } else {
+      console.log("useEffect: Skipping fetchRooms, missing dependencies:", {
+        houseId,
+        apiUrl: !!apiUrl,
+        apiKey: !!apiKey,
+      });
     }
-  }, [
-    pageState.loading,
-    pageState.rooms.length,
-    pageState.error,
-    apiUrl,
-    apiKey,
-    houseId,
-  ]);
+  }, [apiUrl, apiKey, houseId]);
 
   // Handler functions for the RoomTable component
   const handleAdd = () => {

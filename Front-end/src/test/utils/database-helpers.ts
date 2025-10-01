@@ -1,23 +1,85 @@
 // src/test/utils/database-helpers.ts
-import { DatabaseQueries } from "../mocks/database/queries";
-import { db, resetIdCounters } from "../mocks/database/db";
+import { DatabaseQueries } from "../../shared/mocks/database/queries";
+import { db, resetIdCounters } from "../../shared/mocks/database/db";
 import {
   setupBaseData,
   setupBaseDataWithTemperatures,
-} from "../mocks/database/seeders";
+} from "../../shared/mocks/database/seeders";
 
 export class DatabaseTestHelpers {
   /**
    * Clear all data from the test database
    */
   static clearDatabase() {
-    db.temperature.deleteMany({ where: {} });
-    db.auditLog.deleteMany({ where: {} });
-    db.room.deleteMany({ where: {} });
-    db.house.deleteMany({ where: {} });
-    db.user.deleteMany({ where: {} });
-    // Reset ID counters to ensure consistent IDs across test runs
-    resetIdCounters();
+    try {
+      // Clear all data in dependency order (children first, then parents)
+      db.temperature.deleteMany({ where: {} });
+      db.auditLog.deleteMany({ where: {} });
+      db.room.deleteMany({ where: {} });
+      db.house.deleteMany({ where: {} });
+      db.user.deleteMany({ where: {} });
+
+      // Reset ID counters to ensure consistent IDs across test runs
+      resetIdCounters();
+
+      // Log for debugging if needed
+      const counts = {
+        houses: db.house.count(),
+        rooms: db.room.count(),
+        temperatures: db.temperature.count(),
+        users: db.user.count(),
+        auditLogs: db.auditLog.count(),
+      };
+
+      // Only log if there's still data (potential issue)
+      const totalRecords = Object.values(counts).reduce((a, b) => a + b, 0);
+      if (totalRecords > 0) {
+        console.warn("⚠️  Database not fully cleared:", counts);
+      }
+    } catch (error) {
+      console.error("Error clearing database:", error);
+      // Force reset ID counters even if clearing failed
+      resetIdCounters();
+    }
+  }
+
+  /**
+   * Force reset the entire database instance (more aggressive cleanup)
+   */
+  static forceResetDatabase() {
+    try {
+      // Clear all entities multiple times to handle any dependencies
+      for (let i = 0; i < 3; i++) {
+        db.temperature.deleteMany({ where: {} });
+        db.auditLog.deleteMany({ where: {} });
+        db.room.deleteMany({ where: {} });
+        db.house.deleteMany({ where: {} });
+        db.user.deleteMany({ where: {} });
+      }
+
+      // Reset ID counters
+      resetIdCounters();
+
+      // Verify everything is clean
+      const finalCounts = {
+        houses: db.house.count(),
+        rooms: db.room.count(),
+        temperatures: db.temperature.count(),
+        users: db.user.count(),
+        auditLogs: db.auditLog.count(),
+      };
+
+      const totalRecords = Object.values(finalCounts).reduce(
+        (a, b) => a + b,
+        0
+      );
+      if (totalRecords > 0) {
+        console.error("❌ Force reset failed, remaining records:", finalCounts);
+      }
+    } catch (error) {
+      console.error("Error in force reset:", error);
+      resetIdCounters();
+    }
   }
 
   /**
@@ -32,6 +94,13 @@ export class DatabaseTestHelpers {
    */
   static setupBaseDataWithTemperatures() {
     setupBaseDataWithTemperatures();
+  }
+
+  /**
+   * Seed test data (alias for setupBaseData for consistency)
+   */
+  static seedTestData() {
+    this.setupBaseData();
   }
 
   /**

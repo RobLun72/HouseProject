@@ -14,7 +14,7 @@ async function enableMocking() {
     import.meta.env.DEV &&
     import.meta.env.VITE_ENABLE_MSW_MOCKING === "true"
   ) {
-    const { enableMSW } = await import("./mocks/browser");
+    const { enableMSW } = await import("./shared/mocks/browser");
     return enableMSW();
   }
 }

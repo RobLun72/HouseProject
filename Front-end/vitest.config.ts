@@ -9,12 +9,16 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     css: true,
     globals: true,
+    // Enable proper test isolation by running tests in separate processes
     pool: "forks",
     poolOptions: {
       forks: {
-        execArgv: ["--no-warnings=ExperimentalWarning"],
+        singleFork: false, // Allow multiple forks for better test isolation
+        isolate: true, // Ensure each test file runs in isolation
       },
     },
+    // Clean up between test files
+    teardownTimeout: 1000,
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],

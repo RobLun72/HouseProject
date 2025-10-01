@@ -430,4 +430,26 @@ export class DatabaseQueries {
       },
     };
   }
+
+  // Audit Log Operations
+  static getAllAuditLogs() {
+    return db.auditLog.findMany({});
+  }
+
+  // Additional utility methods
+  static getAllRooms() {
+    return db.room.findMany({});
+  }
+
+  static getAllTemperatures() {
+    return db.temperature.findMany({});
+  }
+
+  static clearAllData() {
+    db.temperature.deleteMany({ where: {} });
+    db.auditLog.deleteMany({ where: {} });
+    db.room.deleteMany({ where: {} });
+    db.house.deleteMany({ where: {} });
+    db.user.deleteMany({ where: {} });
+  }
 }

@@ -1,6 +1,6 @@
 // src/test/__tests__/database-integration.test.ts
 import { describe, it, expect, beforeEach } from "vitest";
-import { DatabaseQueries } from "../mocks/database/queries";
+import { DatabaseQueries } from "../../shared/mocks/database/queries";
 import { DatabaseTestHelpers } from "../utils/database-helpers";
 
 describe("Database Integration Tests", () => {
@@ -51,6 +51,7 @@ describe("Database Integration Tests", () => {
 
       // Verify relationships
       const housesWithRooms = DatabaseQueries.getHousesWithRooms();
+
       expect(housesWithRooms).toHaveLength(1);
       expect(housesWithRooms[0].rooms).toHaveLength(2);
     });

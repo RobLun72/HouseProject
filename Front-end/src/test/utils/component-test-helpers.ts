@@ -1,6 +1,6 @@
 // src/test/utils/component-test-helpers.ts
 import { DatabaseTestHelpers } from "./database-helpers";
-import { DatabaseQueries } from "../mocks/database/queries";
+import { DatabaseQueries } from "../../shared/mocks/database/queries";
 import { vi, expect } from "vitest";
 
 /**

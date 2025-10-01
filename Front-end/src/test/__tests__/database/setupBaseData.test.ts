@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   setupBaseData,
   setupBaseDataWithTemperatures,
-} from "../../mocks/database/seeders";
+} from "../../../shared/mocks/database/seeders";
 import { DatabaseTestHelpers } from "../../utils/database-helpers";
 
 describe("setupBaseData function", () => {

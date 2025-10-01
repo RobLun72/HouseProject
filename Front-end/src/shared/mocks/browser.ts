@@ -1,17 +1,14 @@
-// src/mocks/browser.ts
+// src/shared/mocks/browser.ts
 import { setupWorker } from "msw/browser";
-import { developmentHandlers, initializeDatabaseQueries } from "./handlers";
+import { createHouseHandlers } from "./handlers/house";
+import { createRoomHandlers } from "./handlers/room";
+import { createTemperatureHandlers } from "./handlers/temperature";
+import { createDevelopmentConfig } from "./handlers/config";
 
 // Environment variable configuration
 const isMSWEnabled = import.meta.env.VITE_ENABLE_MSW_MOCKING === "true";
 const apiDelay = parseInt(import.meta.env.VITE_MSW_API_DELAY || "0", 10);
 const showWarnings = import.meta.env.VITE_MSW_WARN === "true";
-
-// Setup worker for browser environment in development
-export const developmentWorker = setupWorker(...developmentHandlers);
-
-// Global delay function that handlers can use
-export const getApiDelay = () => apiDelay;
 
 export async function enableMSW() {
   if (!isMSWEnabled) {
@@ -28,17 +25,27 @@ export async function enableMSW() {
     console.log("Setting up MSW database with base data and temperatures...");
 
     // Import the database modules dynamically to avoid Node.js dependencies in build
-    const { DatabaseQueries, setupBaseDataWithTemperatures } = await import(
-      "./database"
+    const { DatabaseQueries } = await import("./database/queries");
+    const { setupBaseDataWithTemperatures } = await import(
+      "./database/seeders"
     );
 
     // Seed the database with base data and temperatures
     setupBaseDataWithTemperatures();
 
-    // Initialize the handlers with database queries
-    initializeDatabaseQueries(DatabaseQueries);
-
     console.log("MSW database initialized with base data and temperatures");
+
+    // Create configuration and handlers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = createDevelopmentConfig(() => DatabaseQueries as any);
+    const handlers = [
+      ...createHouseHandlers(config),
+      ...createRoomHandlers(config),
+      ...createTemperatureHandlers(config),
+    ];
+
+    // Create and start the worker
+    const worker = setupWorker(...handlers);
 
     // Log the API URLs being intercepted
     console.log("MSW will intercept calls to:");
@@ -46,7 +53,7 @@ export async function enableMSW() {
     console.log("- Temperature API:", import.meta.env.VITE_TEMPERATURE_API_URL);
 
     // Start the worker with custom configuration
-    await developmentWorker.start({
+    await worker.start({
       onUnhandledRequest: showWarnings ? "warn" : "bypass",
       quiet: !showWarnings,
     });
@@ -55,6 +62,6 @@ export async function enableMSW() {
       console.log(`MSW API delay set to ${apiDelay}ms`);
     }
 
-    console.log("MSW mocking enabled for development with full database");
+    console.log("MSW mocking enabled for development with unified handlers");
   }
 }
