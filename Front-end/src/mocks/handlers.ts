@@ -1,6 +1,6 @@
 // src/mocks/handlers.ts
 import { http, HttpResponse } from "msw";
-import { applyDevDelay } from "./utils";
+import { applyDevDelay, checkDatabaseInitialized } from "./utils";
 
 // For development, we'll use the MSW database with proper seeding
 // Import the database operations that work in browser context
@@ -32,13 +32,10 @@ export const developmentHandlers = [
     console.log("🎯 MSW intercepted GET /House request");
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
-      const houses = DatabaseQueries.getAllHouses();
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
+      const houses = DatabaseQueries!.getAllHouses();
       console.log("📦 MSW returning houses:", houses.length, "houses");
       return HttpResponse.json(houses);
     } catch (error) {
@@ -53,12 +50,9 @@ export const developmentHandlers = [
   http.get(`${HOUSE_API_BASE}/House/:houseId`, async ({ params }) => {
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const houseId = parseInt(params.houseId as string, 10);
 
       if (isNaN(houseId)) {
@@ -68,7 +62,7 @@ export const developmentHandlers = [
         );
       }
 
-      const house = DatabaseQueries.getHouseById(houseId);
+      const house = DatabaseQueries!.getHouseById(houseId);
 
       if (!house) {
         return HttpResponse.json({ error: "House not found" }, { status: 404 });
@@ -89,12 +83,9 @@ export const developmentHandlers = [
     console.log("🎯 MSW intercepted POST /House request");
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const body = (await request.json()) as Record<string, unknown>;
 
       // Validate required fields
@@ -105,7 +96,7 @@ export const developmentHandlers = [
         );
       }
 
-      const newHouse = DatabaseQueries.createHouse({
+      const newHouse = DatabaseQueries!.createHouse({
         name: body.name as string,
         address: body.address as string | null,
         area: body.area ? Number(body.area) : 0,
@@ -126,12 +117,9 @@ export const developmentHandlers = [
     console.log("🎯 MSW intercepted PUT /House/:houseId request");
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const houseId = parseInt(params.houseId as string, 10);
       const body = (await request.json()) as Record<string, unknown>;
 
@@ -142,7 +130,7 @@ export const developmentHandlers = [
         );
       }
 
-      const updatedHouse = DatabaseQueries.updateHouse(houseId, {
+      const updatedHouse = DatabaseQueries!.updateHouse(houseId, {
         name: body.name as string,
         address: body.address as string | null,
         area: body.area ? Number(body.area) : undefined,
@@ -166,12 +154,9 @@ export const developmentHandlers = [
     console.log("🎯 MSW intercepted DELETE /House/:houseId request");
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const houseId = parseInt(params.houseId as string, 10);
 
       if (isNaN(houseId)) {
@@ -181,7 +166,7 @@ export const developmentHandlers = [
         );
       }
 
-      const result = DatabaseQueries.deleteHouse(houseId);
+      const result = DatabaseQueries!.deleteHouse(houseId);
       console.log("🏠 MSW deleted house:", houseId, "result:", result);
       return HttpResponse.json(result);
     } catch (error) {
@@ -204,12 +189,9 @@ export const developmentHandlers = [
     );
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const houseId = parseInt(params.houseId as string, 10);
 
       if (isNaN(houseId)) {
@@ -219,7 +201,7 @@ export const developmentHandlers = [
         );
       }
 
-      const rooms = DatabaseQueries.getRoomsByHouseId(houseId);
+      const rooms = DatabaseQueries!.getRoomsByHouseId(houseId);
       return HttpResponse.json(rooms);
     } catch (error) {
       console.error("Room fetch error:", error);
@@ -233,19 +215,16 @@ export const developmentHandlers = [
   http.get(`${HOUSE_API_BASE}/Room/:roomId`, async ({ params }) => {
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const roomId = parseInt(params.roomId as string, 10);
 
       if (isNaN(roomId)) {
         return HttpResponse.json({ error: "Invalid room ID" }, { status: 400 });
       }
 
-      const room = DatabaseQueries.getRoomById(roomId);
+      const room = DatabaseQueries!.getRoomById(roomId);
 
       if (!room) {
         return HttpResponse.json({ error: "Room not found" }, { status: 404 });
@@ -264,12 +243,9 @@ export const developmentHandlers = [
   http.post(`${HOUSE_API_BASE}/Room`, async ({ request }) => {
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const body = (await request.json()) as Record<string, unknown>;
 
       // Validate required fields
@@ -287,7 +263,7 @@ export const developmentHandlers = [
         );
       }
 
-      const newRoom = DatabaseQueries.createRoom({
+      const newRoom = DatabaseQueries!.createRoom({
         name: body.name as string,
         houseId: Number(body.houseId),
         type: (body.type as string) || "General",
@@ -308,12 +284,9 @@ export const developmentHandlers = [
   http.put(`${HOUSE_API_BASE}/Room/:roomId`, async ({ params, request }) => {
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const roomId = parseInt(params.roomId as string, 10);
       const body = (await request.json()) as Record<string, unknown>;
 
@@ -321,7 +294,7 @@ export const developmentHandlers = [
         return HttpResponse.json({ error: "Invalid room ID" }, { status: 400 });
       }
 
-      const updatedRoom = DatabaseQueries.updateRoom(roomId, {
+      const updatedRoom = DatabaseQueries!.updateRoom(roomId, {
         name: body.name as string,
         type: body.type as string,
         area: body.area ? Number(body.area) : undefined,
@@ -341,19 +314,16 @@ export const developmentHandlers = [
   http.delete(`${HOUSE_API_BASE}/Room/:roomId`, async ({ params }) => {
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const roomId = parseInt(params.roomId as string, 10);
 
       if (isNaN(roomId)) {
         return HttpResponse.json({ error: "Invalid room ID" }, { status: 400 });
       }
 
-      const result = DatabaseQueries.deleteRoom(roomId);
+      const result = DatabaseQueries!.deleteRoom(roomId);
       return HttpResponse.json(result);
     } catch (error) {
       console.error("Room deletion error:", error);
@@ -368,13 +338,10 @@ export const developmentHandlers = [
   http.get(`${TEMPERATURE_API_BASE}/HousesWithRooms`, async () => {
     await applyDevDelay();
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
-      const houses = DatabaseQueries.getHousesWithRooms();
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
+      const houses = DatabaseQueries!.getHousesWithRooms();
       return HttpResponse.json({ houses });
     } catch (error) {
       console.error("HousesWithRooms fetch error:", error);
@@ -396,12 +363,9 @@ export const developmentHandlers = [
       }
 
       try {
-        if (!DatabaseQueries) {
-          return HttpResponse.json(
-            { error: "Database not initialized" },
-            { status: 500 }
-          );
-        }
+        const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+        if (dbCheck) return dbCheck;
+
         const roomId = parseInt(params.roomId as string, 10);
 
         if (isNaN(roomId)) {
@@ -411,7 +375,7 @@ export const developmentHandlers = [
           );
         }
 
-        const dates = DatabaseQueries.getAvailableDatesForRoom(roomId);
+        const dates = DatabaseQueries!.getAvailableDatesForRoom(roomId);
         return HttpResponse.json({ dates });
       } catch (error) {
         console.error("Temperature dates fetch error:", error);
@@ -434,12 +398,9 @@ export const developmentHandlers = [
       }
 
       try {
-        if (!DatabaseQueries) {
-          return HttpResponse.json(
-            { error: "Database not initialized" },
-            { status: 500 }
-          );
-        }
+        const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+        if (dbCheck) return dbCheck;
+
         const roomId = parseInt(params.roomId as string, 10);
         const date = params.date as string;
 
@@ -450,7 +411,7 @@ export const developmentHandlers = [
           );
         }
 
-        const temperatures = DatabaseQueries.getTemperaturesByRoomAndDate(
+        const temperatures = DatabaseQueries!.getTemperaturesByRoomAndDate(
           roomId,
           date
         );
@@ -476,12 +437,9 @@ export const developmentHandlers = [
     }
 
     try {
-      if (!DatabaseQueries) {
-        return HttpResponse.json(
-          { error: "Database not initialized" },
-          { status: 500 }
-        );
-      }
+      const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+      if (dbCheck) return dbCheck;
+
       const body = (await request.json()) as Record<string, unknown>;
 
       // Validate required fields
@@ -510,7 +468,7 @@ export const developmentHandlers = [
         ? new Date(body.date as string).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0];
 
-      const newTemperature = DatabaseQueries.createTemperature({
+      const newTemperature = DatabaseQueries!.createTemperature({
         roomId: Number(body.roomId),
         hour: Number(body.hour),
         degrees: Number(body.degrees),
@@ -540,12 +498,9 @@ export const developmentHandlers = [
       }
 
       try {
-        if (!DatabaseQueries) {
-          return HttpResponse.json(
-            { error: "Database not initialized" },
-            { status: 500 }
-          );
-        }
+        const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+        if (dbCheck) return dbCheck;
+
         const tempId = parseInt(params.tempId as string, 10);
         const body = (await request.json()) as Record<string, unknown>;
 
@@ -556,7 +511,7 @@ export const developmentHandlers = [
           );
         }
 
-        const updatedTemperature = DatabaseQueries.updateTemperature(tempId, {
+        const updatedTemperature = DatabaseQueries!.updateTemperature(tempId, {
           hour: body.hour ? Number(body.hour) : undefined,
           degrees: body.degrees ? Number(body.degrees) : undefined,
           date: body.date
@@ -594,12 +549,9 @@ export const developmentHandlers = [
       }
 
       try {
-        if (!DatabaseQueries) {
-          return HttpResponse.json(
-            { error: "Database not initialized" },
-            { status: 500 }
-          );
-        }
+        const dbCheck = checkDatabaseInitialized(DatabaseQueries);
+        if (dbCheck) return dbCheck;
+
         const tempId = parseInt(params.tempId as string, 10);
 
         if (isNaN(tempId)) {
@@ -609,7 +561,7 @@ export const developmentHandlers = [
           );
         }
 
-        const result = DatabaseQueries.deleteTemperature(tempId);
+        const result = DatabaseQueries!.deleteTemperature(tempId);
         console.log("🌡️ MSW deleted temperature:", tempId, "result:", result);
         return HttpResponse.json(result);
       } catch (error) {

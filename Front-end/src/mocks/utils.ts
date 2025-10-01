@@ -1,5 +1,5 @@
 // src/mocks/utils.ts
-import { delay } from "msw";
+import { delay, HttpResponse } from "msw";
 
 // Get the configured API delay from environment variables
 const getApiDelay = () => {
@@ -15,6 +15,19 @@ export const applyDevDelay = async () => {
   if (delayMs > 0) {
     await delay(delayMs);
   }
+};
+
+// Database initialization check utility
+export const checkDatabaseInitialized = (
+  DatabaseQueries: unknown
+): Response | null => {
+  if (!DatabaseQueries) {
+    return HttpResponse.json(
+      { error: "Database not initialized" },
+      { status: 500 }
+    );
+  }
+  return null;
 };
 
 export { getApiDelay };
