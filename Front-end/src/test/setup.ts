@@ -41,6 +41,63 @@ import { beforeAll, beforeEach, afterEach, afterAll } from "vitest";
 import { server } from "../shared/mocks/server";
 import { DatabaseTestHelpers } from "./utils/database-helpers";
 
+// Fix React 18 concurrent features + jsdom compatibility issues
+// Ensure window object is properly available for React state updates
+Object.defineProperty(globalThis, "window", {
+  value: globalThis.window || {},
+  writable: true,
+  configurable: true,
+});
+
+// Mock MessageChannel for React 18 concurrent features
+if (!globalThis.MessageChannel) {
+  class MockMessageChannel implements MessageChannel {
+    port1 = {
+      onmessage: null,
+      onmessageerror: null,
+      postMessage: () => {},
+      close: () => {},
+      start: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => true,
+    } as MessagePort;
+    port2 = {
+      onmessage: null,
+      onmessageerror: null,
+      postMessage: () => {},
+      close: () => {},
+      start: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => true,
+    } as MessagePort;
+  }
+  globalThis.MessageChannel = MockMessageChannel;
+}
+
+// Mock requestIdleCallback and cancelIdleCallback for React 18
+if (!globalThis.requestIdleCallback) {
+  globalThis.requestIdleCallback = (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions
+  ) => {
+    const timeout = options?.timeout || 0;
+    return setTimeout(() => {
+      callback({
+        didTimeout: false,
+        timeRemaining: () => 50,
+      });
+    }, timeout) as unknown as number;
+  };
+}
+
+if (!globalThis.cancelIdleCallback) {
+  globalThis.cancelIdleCallback = (id: number) => {
+    clearTimeout(id);
+  };
+}
+
 // Start server before all tests
 beforeAll(() => {
   // MSW v2 server configuration - more lenient for compatibility
