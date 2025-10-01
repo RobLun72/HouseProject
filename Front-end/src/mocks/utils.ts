@@ -30,4 +30,9 @@ export const checkDatabaseInitialized = (
   return null;
 };
 
+// MSW request logging utility
+export const logMswRequest = (requestType: string, requestPath: string) => {
+  console.log(`🎯 MSW intercepted ${requestType} ${requestPath} request`);
+};
+
 export { getApiDelay };
