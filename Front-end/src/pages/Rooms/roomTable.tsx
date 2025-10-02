@@ -79,7 +79,10 @@ function ContextMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="h-12 w-12 bg-transparent p-0 float-end focus:outline-none group">
+        <button
+          className="h-12 w-12 bg-transparent p-0 float-end focus:outline-none group"
+          data-testid={`context-menu-trigger-${row.original.roomId}`}
+        >
           <span className="sr-only">Open menu</span>
           <MoreHorizontal className="h-6 mx-auto text-steel text-center w-6 group-focus:text-primary " />
         </button>

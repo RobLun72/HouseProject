@@ -42,7 +42,7 @@ export function Room() {
 
   useEffect(() => {
     async function fetchRooms() {
-      if (!houseId) {
+      if (!houseId || houseId === "null" || houseId === "undefined") {
         setPageState((prevState) => ({
           ...prevState,
           loading: false,
@@ -94,29 +94,37 @@ export function Room() {
         }));
       } catch (error) {
         console.error("Error fetching rooms:", error);
-        setPageState((prevState) => ({
-          ...prevState,
-          loading: false,
-          rooms: [],
-          error:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-        }));
+        try {
+          setPageState((prevState) => {
+            const newState = {
+              ...prevState,
+              loading: false,
+              rooms: [],
+              houseName: "",
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "An unknown error occurred",
+            };
+
+            return newState;
+          });
+        } catch (stateError) {
+          console.error("Error updating state:", stateError);
+        }
       }
     }
 
-    if (pageState.loading && pageState.rooms.length === 0 && !pageState.error) {
+    // Simplified logic: always fetch when houseId or apiUrl changes, regardless of state
+    if (houseId && apiUrl && apiKey) {
+      setPageState((prevState) => ({
+        ...prevState,
+        loading: true,
+        error: undefined,
+      }));
       fetchRooms();
     }
-  }, [
-    pageState.loading,
-    pageState.rooms.length,
-    pageState.error,
-    apiUrl,
-    apiKey,
-    houseId,
-  ]);
+  }, [apiUrl, apiKey, houseId]);
 
   // Handler functions for the RoomTable component
   const handleAdd = () => {
