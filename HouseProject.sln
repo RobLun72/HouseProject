@@ -2,13 +2,13 @@
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService", "HouseService\HouseService.csproj", "{8946CB50-48D4-4811-831A-E1DFD8421C8F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService", "Back-end\HouseService\HouseService.csproj", "{8946CB50-48D4-4811-831A-E1DFD8421C8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemperatureService", "TemperatureService\TemperatureService.csproj", "{9A57DB70-58E5-4922-942B-F2E8F9C64D9E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemperatureService", "Back-end\TemperatureService\TemperatureService.csproj", "{9A57DB70-58E5-4922-942B-F2E8F9C64D9E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService.Tests", "HouseService.Tests\HouseService.Tests.csproj", "{8C623613-36F4-4234-8682-5818186B6C4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService.Tests", "Back-end\HouseService.Tests\HouseService.Tests.csproj", "{8C623613-36F4-4234-8682-5818186B6C4D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemperatureService.Tests", "TemperatureService.Tests\TemperatureService.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemperatureService.Tests", "Back-end\TemperatureService.Tests\TemperatureService.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,6 +2,21 @@
 
 A microservices-based application for managing houses, rooms, and temperature data with real-time synchronization.
 
+## Project Structure
+
+```
+HouseProject/
+├── Back-end/                    # Backend services and contracts
+│   ├── HouseService/           # House and room management service
+│   ├── HouseService.Tests/     # HouseService unit tests
+│   ├── TemperatureService/     # Temperature readings service
+│   ├── TemperatureService.Tests/ # TemperatureService unit tests
+│   └── MessageContracts/       # Shared message contracts
+├── Front-end/                  # React frontend application
+├── infrastructure/             # Azure deployment scripts
+└── init-scripts/              # Database initialization scripts
+```
+
 ## Services
 
 - **HouseService**: Manages houses and rooms
@@ -73,14 +88,14 @@ Both services include comprehensive test suites:
 ### HouseService Tests
 
 ```bash
-cd HouseService.Tests
+cd Back-end/HouseService.Tests
 dotnet test
 ```
 
 ### TemperatureService Tests
 
 ```bash
-cd TemperatureService.Tests
+cd Back-end/TemperatureService.Tests
 dotnet test
 ```
 

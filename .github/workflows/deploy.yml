@@ -32,10 +32,10 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test HouseService
-        run: dotnet test HouseService.Tests --no-build --configuration Release --verbosity normal
+        run: dotnet test Back-end/HouseService.Tests --no-build --configuration Release --verbosity normal
 
       - name: Test TemperatureService
-        run: dotnet test TemperatureService.Tests --no-build --configuration Release --verbosity normal
+        run: dotnet test Back-end/TemperatureService.Tests --no-build --configuration Release --verbosity normal
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -84,7 +84,7 @@ jobs:
         run: |
           docker build -t ${{ steps.registry.outputs.registry_server }}/houseservice:${{ steps.env.outputs.image_tag }} \
             -t ${{ steps.registry.outputs.registry_server }}/houseservice:latest \
-            -f HouseService/Dockerfile .
+            -f Back-end/HouseService/Dockerfile .
           docker push ${{ steps.registry.outputs.registry_server }}/houseservice:${{ steps.env.outputs.image_tag }}
           docker push ${{ steps.registry.outputs.registry_server }}/houseservice:latest
 
@@ -92,7 +92,7 @@ jobs:
         run: |
           docker build -t ${{ steps.registry.outputs.registry_server }}/temperatureservice:${{ steps.env.outputs.image_tag }} \
             -t ${{ steps.registry.outputs.registry_server }}/temperatureservice:latest \
-            -f TemperatureService/Dockerfile .
+            -f Back-end/TemperatureService/Dockerfile .
           docker push ${{ steps.registry.outputs.registry_server }}/temperatureservice:${{ steps.env.outputs.image_tag }}
           docker push ${{ steps.registry.outputs.registry_server }}/temperatureservice:latest
 

@@ -37,7 +37,7 @@ services:
   temperature-service:
     build:
       context: .
-      dockerfile: ./TemperatureService/Dockerfile
+      dockerfile: ./Back-end/TemperatureService/Dockerfile
     container_name: temperature-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
@@ -81,7 +81,7 @@ services:
   house-service:
     build:
       context: .
-      dockerfile: ./HouseService/Dockerfile
+      dockerfile: ./Back-end/HouseService/Dockerfile
     container_name: house-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker

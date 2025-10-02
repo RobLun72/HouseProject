@@ -24,14 +24,19 @@ RUN npm ci
 # Copy source code and change ownership
 COPY --chown=frontend:nodejs . .
 
+# Clean any existing Vite cache and create with proper permissions
+RUN rm -rf node_modules/.vite 2>/dev/null || true && \
+    mkdir -p node_modules/.vite && \
+    chown -R frontend:nodejs node_modules/.vite
+
 # Switch to non-root user
 USER frontend
 
 # Expose Vite dev server port
 EXPOSE 3000
 
-# Start development server with host binding for Docker
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+# Start development server with host binding for Docker and force dependency re-optimization
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000", "--force"]
 
 # Build stage - Debian slim for build tools, minimal CVE exposure
 FROM node:20-slim AS build

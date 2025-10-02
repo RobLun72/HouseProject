@@ -12,17 +12,17 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Copy shared contracts project
-COPY ["MessageContracts/MessageContracts.csproj", "MessageContracts/"]
+COPY ["Back-end/MessageContracts/MessageContracts.csproj", "MessageContracts/"]
 
 # Copy service project
-COPY ["HouseService/HouseService.csproj", "HouseService/"]
+COPY ["Back-end/HouseService/HouseService.csproj", "HouseService/"]
 
 # Restore dependencies
 RUN dotnet restore "HouseService/HouseService.csproj"
 
 # Copy all source code
-COPY MessageContracts/ MessageContracts/
-COPY HouseService/ HouseService/
+COPY Back-end/MessageContracts/ MessageContracts/
+COPY Back-end/HouseService/ HouseService/
 
 # Build the projects
 WORKDIR "/src/HouseService"

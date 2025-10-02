@@ -7,17 +7,17 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Copy shared contracts project
-COPY ["MessageContracts/MessageContracts.csproj", "MessageContracts/"]
+COPY ["Back-end/MessageContracts/MessageContracts.csproj", "MessageContracts/"]
 
 # Copy service project
-COPY ["TemperatureService/TemperatureService.csproj", "TemperatureService/"]
+COPY ["Back-end/TemperatureService/TemperatureService.csproj", "TemperatureService/"]
 
 # Restore dependencies
 RUN dotnet restore "TemperatureService/TemperatureService.csproj"
 
 # Copy all source code
-COPY MessageContracts/ MessageContracts/
-COPY TemperatureService/ TemperatureService/
+COPY Back-end/MessageContracts/ MessageContracts/
+COPY Back-end/TemperatureService/ TemperatureService/
 
 # Build the projects
 WORKDIR "/src/TemperatureService"
