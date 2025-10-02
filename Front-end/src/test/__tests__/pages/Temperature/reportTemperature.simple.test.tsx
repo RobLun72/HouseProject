@@ -1,17 +1,13 @@
 // src/test/__tests__/pages/Temperature/reportTemperature.simple.test.tsx
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ReportTemperature } from "../../../../pages/Temperature/reportTemperature";
 import { DatabaseTestHelpers } from "../../../utils/database-helpers";
+import { APIMockHelpers } from "../../../utils/api-mock-helpers";
 
-// Mock the environment variables hook
-vi.mock("@/helpers/useTemperatureApiEnvVariables", () => ({
-  useTemperatureApiEnvVariables: () => ({
-    apiUrl: "https://localhost:7002",
-    apiKey: "dev-key-123456789",
-  }),
-}));
+// Mock the environment variables hook using the reusable helper
+APIMockHelpers.mockTemperatureApiEnvVariables();
 
 // Custom render function that includes router context
 const renderWithRouter = (ui: React.ReactElement) => {
@@ -22,6 +18,10 @@ describe("ReportTemperature Component - Simple Tests", () => {
   beforeEach(() => {
     // Setup base test data from JSON files (3 houses with proper room distribution)
     DatabaseTestHelpers.setupBaseData();
+  });
+
+  afterEach(() => {
+    APIMockHelpers.restoreAllMocks();
   });
 
   it("should render the component successfully", async () => {

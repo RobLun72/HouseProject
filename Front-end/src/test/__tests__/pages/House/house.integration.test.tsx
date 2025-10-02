@@ -7,20 +7,14 @@ import { HouseEdit } from "@/pages/House/houseEdit";
 import { ComponentTestHelpers } from "@/test/utils/component-test-helpers";
 import { DatabaseTestHelpers } from "@/test/utils/database-helpers";
 import { DatabaseQueries } from "@/shared/mocks/database/queries";
+import { APIMockHelpers } from "@/test/utils/api-mock-helpers";
 import userEvent from "@testing-library/user-event";
 
-// Mock the environment variables
-vi.mock("@/helpers/useApiEnvVariables", () => ({
-  useApiEnvVariables: () => ({
-    apiUrl: "https://localhost:7001",
-    apiKey: "dev-key-123456789",
-  }),
-}));
+// Mock the environment variables using the reusable helper
+APIMockHelpers.mockApiEnvVariables();
 
-// Mock the responsive hook
-vi.mock("@/helpers/useResponsive", () => ({
-  useResponsive: () => ({ isMobile: false }),
-}));
+// Mock the responsive hook using the reusable helper
+APIMockHelpers.mockResponsive();
 
 /**
  * Integration test component that renders House, HouseAdd, and HouseEdit components
@@ -46,6 +40,7 @@ describe("House Integration Tests", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    APIMockHelpers.restoreAllMocks();
   });
 
   describe("Complete House Management Flow", () => {

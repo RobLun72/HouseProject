@@ -7,20 +7,14 @@ import { RoomEdit } from "@/pages/Rooms/roomEdit";
 import { ComponentTestHelpers } from "@/test/utils/component-test-helpers";
 import { DatabaseTestHelpers } from "@/test/utils/database-helpers";
 import { DatabaseQueries } from "@/shared/mocks/database/queries";
+import { APIMockHelpers } from "@/test/utils/api-mock-helpers";
 import userEvent from "@testing-library/user-event";
 
-// Mock the environment variables
-vi.mock("@/helpers/useApiEnvVariables", () => ({
-  useApiEnvVariables: () => ({
-    apiUrl: "https://localhost:7001",
-    apiKey: "dev-key-123456789",
-  }),
-}));
+// Mock the environment variables using the reusable helper
+APIMockHelpers.mockApiEnvVariables();
 
-// Mock the responsive hook
-vi.mock("@/helpers/useResponsive", () => ({
-  useResponsive: () => ({ isMobile: false }),
-}));
+// Mock the responsive hook using the reusable helper
+APIMockHelpers.mockResponsive();
 
 // Helper function for consistent timeout across all tests
 const waitForRoomsToLoad = async () => {
@@ -64,6 +58,7 @@ describe("Room Integration Tests", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    APIMockHelpers.restoreAllMocks();
   });
 
   describe("Complete Room Management Flow", () => {

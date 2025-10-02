@@ -1,14 +1,13 @@
 // src/test/__tests__/pages/Rooms/roomTable.test.tsx
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RoomTable } from "../../../../pages/Rooms/roomTable";
 import { ComponentTestHelpers } from "../../../utils/component-test-helpers";
+import { APIMockHelpers } from "../../../utils/api-mock-helpers";
 import type { Room } from "../../../../pages/Rooms/room";
 
-// Mock the responsive hook
-vi.mock("@/helpers/useResponsive", () => ({
-  useResponsive: () => ({ isMobile: false }),
-}));
+// Mock the responsive hook using the reusable helper
+APIMockHelpers.mockResponsive();
 
 // Mock react-router-dom
 vi.mock("react-router-dom", () => ({
@@ -45,6 +44,11 @@ describe("RoomTable Component", () => {
     // Create fresh test data and handlers
     testData = ComponentTestHelpers.createRoomScenarioForTesting();
     mockHandlers = ComponentTestHelpers.createMockHandlers();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    APIMockHelpers.restoreAllMocks();
   });
 
   describe("Rendering and Data Display", () => {

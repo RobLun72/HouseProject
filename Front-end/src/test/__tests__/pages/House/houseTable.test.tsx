@@ -1,14 +1,13 @@
 // src/test/__tests__/pages/House/houseTable.test.tsx
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { HouseTable } from "../../../../pages/House/houseTable";
 import { ComponentTestHelpers } from "../../../utils/component-test-helpers";
+import { APIMockHelpers } from "../../../utils/api-mock-helpers";
 import type { House } from "../../../../pages/House/house";
 
-// Mock the responsive hook
-vi.mock("@/helpers/useResponsive", () => ({
-  useResponsive: () => ({ isMobile: false }),
-}));
+// Mock the responsive hook using the reusable helper
+APIMockHelpers.mockResponsive();
 
 // Mock react-router-dom
 vi.mock("react-router-dom", () => ({
@@ -40,6 +39,11 @@ describe("HouseTable Component", () => {
     // Create fresh test data and handlers
     testData = ComponentTestHelpers.createHouseScenarioForTesting();
     mockHandlers = ComponentTestHelpers.createMockHandlers();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    APIMockHelpers.restoreAllMocks();
   });
 
   describe("Rendering and Data Display", () => {
