@@ -59,6 +59,7 @@ export function HouseTable({
       filterColumnName="name"
       pageIndex={pageParam ? parseInt(pageParam) : 0}
       sortingState={sorting}
+      pageSize={15}
       pageParams={pageParams}
       onAdd={handleAdd}
       dragDropEnabled={false}

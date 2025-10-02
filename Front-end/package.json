@@ -9,11 +9,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest --watch",
+    "test": "vitest --mode test",
+    "test:ui": "vitest --ui --mode test",
+    "test:run": "vitest run --mode test",
+    "test:coverage": "vitest run --coverage --mode test",
+    "test:watch": "vitest --watch --mode test",
     "clean": "rm -rf node_modules/.vite && rm -rf dist"
   },
   "dependencies": {
