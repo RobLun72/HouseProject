@@ -44,45 +44,6 @@ export class DatabaseTestHelpers {
   }
 
   /**
-   * Force reset the entire database instance (more aggressive cleanup)
-   */
-  static forceResetDatabase() {
-    try {
-      // Clear all entities multiple times to handle any dependencies
-      for (let i = 0; i < 3; i++) {
-        db.temperature.deleteMany({ where: {} });
-        db.auditLog.deleteMany({ where: {} });
-        db.room.deleteMany({ where: {} });
-        db.house.deleteMany({ where: {} });
-        db.user.deleteMany({ where: {} });
-      }
-
-      // Reset ID counters
-      resetIdCounters();
-
-      // Verify everything is clean
-      const finalCounts = {
-        houses: db.house.count(),
-        rooms: db.room.count(),
-        temperatures: db.temperature.count(),
-        users: db.user.count(),
-        auditLogs: db.auditLog.count(),
-      };
-
-      const totalRecords = Object.values(finalCounts).reduce(
-        (a, b) => a + b,
-        0
-      );
-      if (totalRecords > 0) {
-        console.error("❌ Force reset failed, remaining records:", finalCounts);
-      }
-    } catch (error) {
-      console.error("Error in force reset:", error);
-      resetIdCounters();
-    }
-  }
-
-  /**
    * Setup base test data from JSON files (3 houses, 3 rooms as specified)
    */
   static setupBaseData() {
