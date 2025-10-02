@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: ["./src/test/setup.ts"],
       css: true,
       globals: true,
+
       // Enable proper test isolation by running tests in separate processes
       pool: "forks",
       poolOptions: {
