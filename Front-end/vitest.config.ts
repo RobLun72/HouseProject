@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig(({ mode }) => {
   // Load environment variables from .env.test for testing
   const env = loadEnv(mode || "test", process.cwd(), "VITE_");
-  
+
   return {
     plugins: [react()],
     define: {
