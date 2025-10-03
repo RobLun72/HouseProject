@@ -76,6 +76,44 @@ describe("RoomTemperatureDialog", () => {
 - **Data Management**: MSW, In-memory db
 - **Test Code**: Make support methods for Arrange, Act and Assert to make the tests more readable
 
+## 🏗️ Large Task Integration
+
+### When `#large` Keyword is Used
+
+This agent can escalate complex testing tasks to the **LargeTask-Agent** for comprehensive planning:
+
+```markdown
+Examples of #large testing tasks:
+
+- Complete test automation framework setup
+- End-to-end testing strategy implementation
+- Performance testing and load testing setup
+- Test data management and factory patterns
+- Cross-service integration testing strategy
+- Quality gates and CI/CD testing pipeline
+```
+
+**Process Flow**:
+
+```
+Testing Request + #large → LargeTask-Agent → Planning Document → Continue Question → Testing-Agent Implementation
+```
+
+**Enhanced Workflow**:
+
+1. **LargeTask-Agent** creates comprehensive planning document with structured todos
+2. **Continue Question**: User reviews plan and confirms to proceed with implementation
+3. **Context Handoff**: This Testing-Agent receives the planning document as primary context
+4. **Implementation**: Execute tasks from planning document, crossing off completed todos
+5. **Progress Tracking**: Update planning document with completion status and notes
+
+**Implementation Guidelines**:
+
+- Check if there is a `Large_Task.md` file - if present, always reference it for current phase and specific tasks
+- Cross off completed todos using `- [x]` markdown syntax in the `Large_Task.md` file
+- Update `Large_Task.md` with implementation notes and any discovered issues
+- Ask for guidance if planning assumptions prove incorrect during implementation
+
 ## 🛠️ Test Data Strategies
 
 ### Database Testing

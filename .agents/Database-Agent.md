@@ -76,6 +76,44 @@ migrationBuilder.CreateIndex(
 - Pagination for large result sets
 - Efficient date range queries
 
+## 🏗️ Large Task Integration
+
+### When `#large` Keyword is Used
+
+This agent can escalate complex database tasks to the **LargeTask-Agent** for comprehensive planning:
+
+```markdown
+Examples of #large database tasks:
+
+- Complete database schema redesign and migration
+- Multi-phase data migration from legacy systems
+- Performance optimization across multiple tables
+- Complex reporting and analytics database setup
+- Data archiving and partitioning strategy
+- Database sharding or replication implementation
+```
+
+**Process Flow**:
+
+```
+Database Request + #large → LargeTask-Agent → Planning Document → Continue Question → Database-Agent Implementation
+```
+
+**Enhanced Workflow**:
+
+1. **LargeTask-Agent** creates comprehensive planning document with structured todos
+2. **Continue Question**: User reviews plan and confirms to proceed with implementation
+3. **Context Handoff**: This Database-Agent receives the planning document as primary context
+4. **Implementation**: Execute tasks from planning document, crossing off completed todos
+5. **Progress Tracking**: Update planning document with completion status and notes
+
+**Implementation Guidelines**:
+
+- Check if there is a `Large_Task.md` file - if present, always reference it for current phase and specific tasks
+- Cross off completed todos using `- [x]` markdown syntax in the `Large_Task.md` file
+- Update `Large_Task.md` with implementation notes and any discovered issues
+- Ask for guidance if planning assumptions prove incorrect during implementation
+
 ## 🔧 Migration Best Practices
 
 ### Creating Migrations

@@ -87,6 +87,44 @@ environment:
   - ASPNETCORE_ENVIRONMENT=Docker
 ```
 
+## 🏗️ Large Task Integration
+
+### When `#large` Keyword is Used
+
+This agent can escalate complex infrastructure tasks to the **LargeTask-Agent** for comprehensive planning:
+
+```markdown
+Examples of #large infrastructure tasks:
+
+- Complete CI/CD pipeline implementation
+- Multi-environment deployment strategy (dev, staging, prod)
+- Container orchestration with Kubernetes migration
+- Infrastructure as Code implementation
+- Monitoring and observability platform setup
+- Security hardening and compliance implementation
+```
+
+**Process Flow**:
+
+```
+Infrastructure Request + #large → LargeTask-Agent → Planning Document → Continue Question → Infrastructure-Agent Implementation
+```
+
+**Enhanced Workflow**:
+
+1. **LargeTask-Agent** creates comprehensive planning document with structured todos
+2. **Continue Question**: User reviews plan and confirms to proceed with implementation
+3. **Context Handoff**: This Infrastructure-Agent receives the planning document as primary context
+4. **Implementation**: Execute tasks from planning document, crossing off completed todos
+5. **Progress Tracking**: Update planning document with completion status and notes
+
+**Implementation Guidelines**:
+
+- Check if there is a `Large_Task.md` file - if present, always reference it for current phase and specific tasks
+- Cross off completed todos using `- [x]` markdown syntax in the `Large_Task.md` file
+- Update `Large_Task.md` with implementation notes and any discovered issues
+- Ask for guidance if planning assumptions prove incorrect during implementation
+
 ## 🚀 Deployment Strategies
 
 ### Development Environment
