@@ -20,6 +20,7 @@ export function setupBaseData() {
       houseId: houseData.houseId,
       name: houseData.name,
       address: houseData.address,
+      area: houseData.area || undefined,
     });
   });
 

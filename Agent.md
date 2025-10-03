@@ -18,14 +18,31 @@ _Master orchestration and context management for AI-assisted development_
 
 ### 🎯 When to Use Which Agent
 
-| Task Type                   | Delegate To               | Rationale                                       |
-| --------------------------- | ------------------------- | ----------------------------------------------- |
-| React Components/UI         | `Frontend-Agent.md`       | Specialized in React patterns, state management |
-| API Controllers/Services    | `Backend-Agent.md`        | Expert in .NET Core, EF Core, REST APIs         |
-| Database schemas/migrations | `Database-Agent.md`       | Focused on PostgreSQL, EF migrations            |
-| Docker/Infrastructure       | `Infrastructure-Agent.md` | Container orchestration, deployment             |
-| Testing (any layer)         | `Testing-Agent.md`        | Unit tests, integration tests, TDD              |
-| Architecture decisions      | Stay with Master Agent    | Cross-cutting concerns need full context        |
+| Task Type                        | Delegate To               | Rationale                                         |
+| -------------------------------- | ------------------------- | ------------------------------------------------- |
+| **Large/Complex Tasks (#large)** | `LargeTask-Agent.md`      | **Multi-phase planning and structured breakdown** |
+| React Components/UI              | `Frontend-Agent.md`       | Specialized in React patterns, state management   |
+| API Controllers/Services         | `Backend-Agent.md`        | Expert in .NET Core, EF Core, REST APIs           |
+| Database schemas/migrations      | `Database-Agent.md`       | Focused on PostgreSQL, EF migrations              |
+| Docker/Infrastructure            | `Infrastructure-Agent.md` | Container orchestration, deployment               |
+| Testing (any layer)              | `Testing-Agent.md`        | Unit tests, integration tests, TDD                |
+| Architecture decisions           | Stay with Master Agent    | Cross-cutting concerns need full context          |
+
+### 🔄 LargeTask-Agent Integration
+
+The **LargeTask-Agent** serves as a meta-planning layer for complex work:
+
+- **Activation**: Use `#large` keyword in any request (works with specialized agents too)
+- **Process**: Creates comprehensive planning documents with structured todos
+- **Delegation**: Can delegate implementation phases to specialized agents
+- **File Output**: Stores plans as `#file [name].md` or defaults to `large_task.md`
+
+**Workflow Examples**:
+
+```
+User Request → Agent.md → LargeTask-Agent.md → [Planning Document] → Continue Question → Specialized Agents
+User Request → Frontend-Agent.md → LargeTask-Agent.md (#large) → [Planning] → Continue Question → Frontend-Agent.md
+```
 
 ### 🔄 Delegation Protocol
 
@@ -35,6 +52,26 @@ _Master orchestration and context management for AI-assisted development_
 3. **Constraints**: Specify existing patterns, naming conventions, dependencies
 4. **Return Protocol**: Sub-agent provides code + explanation + integration notes
 ```
+
+### 🏗️ Large Task Planning Protocol
+
+When `#large` keyword is detected:
+
+```markdown
+1. **Immediate Planning**: LargeTask-Agent creates comprehensive planning document
+2. **Structured Breakdown**: Multi-phase approach with dependencies and risk assessment
+3. **Continue Question**: User reviews and confirms plan before implementation begins
+4. **Context Handoff**: Planning document becomes primary context for specialized agents
+5. **Progress Tracking**: Specialized agents cross off todos and update planning document
+6. **Documentation**: All planning and progress stored in markdown files for future reference
+```
+
+**Integration Points**:
+
+- **From Master Agent**: Full project context and architectural decisions
+- **To Specialized Agents**: Phase-specific implementation with clear scope
+- **Planning Documents**: Persistent documentation of approach and decisions
+- **Quality Gates**: Built-in review checkpoints and validation criteria
 
 ## Current Project State
 
@@ -89,6 +126,8 @@ Each sub-agent should receive:
 - Integration between frontend and backend
 - Performance optimization strategies
 - Security considerations
+- **Large task coordination**: Orchestrating multi-phase implementations via LargeTask-Agent
+- **Planning document review**: Validating comprehensive plans before implementation begins
 
 ---
 

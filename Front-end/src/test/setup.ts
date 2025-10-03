@@ -111,8 +111,8 @@ beforeAll(() => {
 
 // Ensure clean state before each test
 beforeEach(() => {
-  // Force aggressive database cleanup before each test
-  DatabaseTestHelpers.forceResetDatabase();
+  // Clear database before each test
+  DatabaseTestHelpers.clearDatabase();
   // Clear DOM to prevent element accumulation
   document.body.innerHTML = "";
 });
@@ -120,8 +120,8 @@ beforeEach(() => {
 // Reset handlers after each test
 afterEach(() => {
   server.resetHandlers();
-  // Force aggressive database cleanup after each test
-  DatabaseTestHelpers.forceResetDatabase();
+  // Clear database after each test
+  DatabaseTestHelpers.clearDatabase();
   // Clear DOM to prevent element accumulation
   document.body.innerHTML = "";
   // Note: Not seeding test data here - let each test create what it needs

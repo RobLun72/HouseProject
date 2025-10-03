@@ -94,6 +94,43 @@ try {
 - Responsive design (`md:`, `lg:` breakpoints)
 - Consistent spacing and typography
 
+## 🏗️ Large Task Integration
+
+### When `#large` Keyword is Used
+
+This agent can escalate complex frontend tasks to the **LargeTask-Agent** for comprehensive planning:
+
+```markdown
+Examples of #large frontend tasks:
+
+- Complete authentication system with multiple components
+- Complex data visualization dashboard
+- Multi-step form wizard with validation
+- State management refactoring across multiple components
+- Integration of new UI framework or major library
+```
+
+**Process Flow**:
+
+```
+Frontend Request + #large → LargeTask-Agent → Planning Document → Continue Question → Frontend-Agent Implementation
+```
+
+**Enhanced Workflow**:
+
+1. **LargeTask-Agent** creates comprehensive planning document with structured todos
+2. **Continue Question**: User reviews plan and confirms to proceed with implementation
+3. **Context Handoff**: This Frontend-Agent receives the planning document as primary context
+4. **Implementation**: Execute tasks from planning document, crossing off completed todos
+5. **Progress Tracking**: Update planning document with completion status and notes
+
+**Implementation Guidelines**:
+
+- Check if there is a `Large_Task.md` file - if present, always reference it for current phase and specific tasks
+- Cross off completed todos using `- [x]` markdown syntax in the `Large_Task.md` file
+- Update `Large_Task.md` with implementation notes and any discovered issues
+- Ask for guidance if planning assumptions prove incorrect during implementation
+
 ## 🔧 Integration Requirements
 
 ### When Creating New Components

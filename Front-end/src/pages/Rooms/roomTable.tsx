@@ -58,6 +58,7 @@ export function RoomTable({
       }
       filterColumnName="name"
       pageIndex={pageParam ? parseInt(pageParam) : 0}
+      pageSize={15}
       sortingState={sorting}
       pageParams={pageParams}
       onAdd={handleAdd}

@@ -56,9 +56,18 @@ export const logResponse = (
 // Apply delay based on configuration
 export const applyConfiguredDelay = async (config: HandlerConfig) => {
   if (config.enableDelay) {
-    // Import the delay utility from shared location
-    const { applyDevDelay } = await import("../utils");
-    await applyDevDelay();
+    // Import delay function from MSW
+    const { delay } = await import("msw");
+
+    // Use configured delay for development, default to 500ms
+    const delayMs =
+      config.environment === "development"
+        ? parseInt(import.meta.env.VITE_MSW_API_DELAY || "500", 10)
+        : 0;
+
+    if (delayMs > 0) {
+      await delay(delayMs);
+    }
   }
 };
 
