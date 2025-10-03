@@ -54,5 +54,5 @@ export const createTestConfig = (
   logPrefix: "MSW Test Handler",
   enableRequestLogging: false,
   enableResponseLogging: false,
-  enableDelay: true,
+  enableDelay: false, // No delays in test mode for fast execution
 });

@@ -9,11 +9,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest --mode test",
-    "test:ui": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest --ui --mode test",
-    "test:run": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest run --mode test",
-    "test:coverage": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest run --coverage --mode test",
-    "test:watch": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest --watch --mode test",
+    "test": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest",
+    "test:ui": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest --ui",
+    "test:run": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest run",
+    "test:coverage": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest run --coverage",
+    "test:watch": "cross-env NODE_OPTIONS=\"--disable-warning=ExperimentalWarning\" vitest --watch",
     "clean": "rm -rf node_modules/.vite && rm -rf dist"
   },
   "dependencies": {

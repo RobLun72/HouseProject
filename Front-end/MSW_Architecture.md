@@ -113,34 +113,32 @@ VITE_MSW_API_DELAY=500
 VITE_MSW_WARN=false
 ```
 
-### Test Environment (`.env.test`)
+### Test Environment Configuration
 
-```bash
-# MSW Mock Configuration for Testing
-VITE_ENABLE_MSW_MOCKING=true
-VITE_MSW_API_DELAY=0
-VITE_MSW_WARN=false
-```
-
-### Configuration Loading
-
-The Vitest configuration dynamically loads environment variables:
+Test environment variables are configured directly in `src/test/setup.ts`:
 
 ```typescript
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode || "test", process.cwd(), "VITE_");
-  // Make environment variables available in tests
-  return {
-    define: {
-      ...Object.keys(env).reduce((prev, key) => {
-        prev[`import.meta.env.${key}`] = JSON.stringify(env[key]);
-        return prev;
-      }, {} as Record<string, string>),
-    },
-    // ... rest of config
-  };
+// Mock environment variables
+Object.defineProperty(import.meta, "env", {
+  value: {
+    VITE_TEMPERATURE_API_URL: "https://localhost:7002",
+    VITE_TEMPERATURE_API_KEY: "dev-key-123456789",
+    VITE_HOUSE_API_URL: "https://localhost:7001",
+    VITE_HOUSE_API_KEY: "dev-key-123456789",
+  },
+  writable: true,
 });
 ```
+
+> **Note**: No `.env.test` file is needed. All test configuration is handled in code for better maintainability and clearer dependency management.
+
+### Configuration Approach
+
+Test configuration follows a **code-over-files** approach:
+
+1. **Environment Variables**: Set directly in `src/test/setup.ts` using `Object.defineProperty`
+2. **MSW Configuration**: Controlled via `enableDelay: false` in test config
+3. **No External Files**: No `.env.test` or other environment files needed
 
 ## Database Layer
 
@@ -302,7 +300,7 @@ MSW provides excellent DevTools integration:
 
 ### Test Environment Optimization
 
-- **Zero Delays**: `VITE_MSW_API_DELAY=0` for fast test execution
+- **Zero Delays**: `enableDelay: false` in test config for fast test execution
 - **Isolated State**: Each test gets a clean database state
 - **Deterministic**: Consistent behavior across test runs
 - **Comprehensive Coverage**: All API endpoints mocked
@@ -390,7 +388,7 @@ export const createTestConfig = (
   logPrefix: "MSW Test Handler",
   enableRequestLogging: false,
   enableResponseLogging: false,
-  enableDelay: true, // Controlled by VITE_MSW_API_DELAY=0 in .env.test
+  enableDelay: false, // No delays in test mode for fast execution
 });
 ```
 
@@ -496,10 +494,10 @@ const handlers = [
 
 **4. Performance Issues**
 
-```bash
-# Check API delay configuration
-VITE_MSW_API_DELAY=0  # For tests
-VITE_MSW_API_DELAY=500  # For development
+```typescript
+// Check delay configuration in config files
+// Test config: enableDelay: false (fast execution)
+// Development config: enableDelay: true (realistic delays)
 ```
 
 ### Debugging Tools
