@@ -10,7 +10,9 @@ HouseProject is a microservices-based application for managing houses, rooms, an
 - **Backend**: ASP.NET Core Web APIs (HouseService, TemperatureService)
 - **Database**: PostgreSQL with Entity Framework Core
 - **Infrastructure**: Docker, Docker Compose, Multi-stage builds
-- **Testing**: xUnit for backend with comprehensive test coverage
+- **Testing**:
+  - **Backend**: xUnit with comprehensive unit and integration tests
+  - **Frontend**: Vitest + React Testing Library + MSW (Mock Service Worker)
 - **Security**: API Key Authentication, CORS support, Distroless containers
 
 ## System Architecture
@@ -26,18 +28,18 @@ HouseProject is a microservices-based application for managing houses, rooms, an
           CORS-Enabled            HTTPS/API Keys
           API Calls                     │
                 │                       │
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Application Layer                                  │
-├──────────────┬──────────────────────┬─────────────────────────────────────────┤
-│   Frontend   │      HouseService    │         TemperatureService              │
-│   Container  │                      │                                         │
-│              │  • House Management  │  • Temperature Data                     │
-│  • React SPA │  • Room Management   │  • House/Room Synchronization           │
-│  • TypeScript│  • Event Publishing  │  • Event Consumption                    │
-│  • Tailwind  │  • API Key Auth      │  • API Key Authentication               │
-│  • ShadCN UI │  • CORS Support      │  • CORS Support                         │
-│  • Vite      │  • Streamlined APIs  │  • Streamlined APIs                     │
-└──────────────┴──────────────────────┴─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            Application Layer                                │
+├──────────────┬──────────────────────┬───────────────────────────────────────┤
+│   Frontend   │      HouseService    │         TemperatureService            │
+│   Container  │                      │                                       │
+│              │  • House Management  │  • Temperature Data                   │
+│  • React SPA │  • Room Management   │  • House/Room Synchronization         │
+│  • TypeScript│  • Event Publishing  │  • Event Consumption                  │
+│  • Tailwind  │  • API Key Auth      │  • API Key Authentication             │
+│  • ShadCN UI │  • CORS Support      │  • CORS Support                       │
+│  • Vite      │  • Streamlined APIs  │  • Streamlined APIs                   │
+└──────────────┴──────────────────────┴───────────────────────────────────────┘
                           │                                       │
                           └─────────────┐         ┌───────────────┘
                                         │         │
@@ -608,7 +610,9 @@ public async Task GetTemperaturesByRoomAndDate_ValidData_ReturnsTemperatures()
 
 ## Testing Strategy
 
-### Unit Tests (Implemented)
+### Backend Testing (Implemented)
+
+#### Unit Tests
 
 - **HouseService Tests**: 9 comprehensive tests covering all controller endpoints
   - CRUD operations validation
@@ -620,17 +624,172 @@ public async Task GetTemperaturesByRoomAndDate_ValidData_ReturnsTemperatures()
   - Synchronized house/room endpoint testing
 - **Test Framework**: xUnit with comprehensive assertions and mocking
 
-### Integration Tests (Planned)
+#### Integration Tests (Planned)
 
 - **End-to-End**: Full request/response cycles with containerized services
 - **Database Integration**: Real database operations
 - **Message Bus**: Event publishing/consumption testing
 
+### Frontend Testing (Implemented)
+
+#### Test Framework & Tools
+
+- **Vitest**: Fast, modern test runner with native ESM support
+- **React Testing Library**: Component testing with user-centric queries
+- **MSW (Mock Service Worker)**: API mocking for both development and testing
+- **jsdom**: Simulated browser environment for Node.js tests
+- **Coverage**: Vitest coverage-v8 for comprehensive test coverage reporting
+
+#### Testing Architecture
+
+**MSW-Based API Mocking**:
+
+```typescript
+// Unified mocking approach for development and testing
+Development Mode:
+- MSW Service Worker (browser-based)
+- Request/response logging enabled
+- Configurable delays (500ms default)
+- Persistent in-memory database state
+
+Test Mode:
+- MSW Node.js server
+- Zero delays for fast execution
+- Isolated database state per test
+- Minimal logging for clean output
+```
+
+**In-Memory Database** (`@mswjs/data`):
+
+- Full relational data modeling (Houses, Rooms, Temperatures)
+- Unified query interface for CRUD operations
+- Automatic cleanup between tests
+- Realistic test data seeding with `@faker-js/faker`
+
+#### Test Coverage Areas
+
+**Component Tests**:
+
+- React component rendering and behavior
+- User interactions (clicks, form inputs, navigation)
+- State management and data flow
+- Error boundaries and fallback UI
+- Responsive design validation
+
+**Integration Tests**:
+
+- Complete user workflows (create, read, update, delete)
+- Multi-component interactions
+- API call sequences and error handling
+- Navigation and routing flows
+- Authentication and authorization
+
+**Database Integration Tests**:
+
+- CRUD operations through MSW handlers
+- Data relationships (Houses ↔ Rooms ↔ Temperatures)
+- Query filtering and pagination
+- Cascading deletes and referential integrity
+
+**Environment Tests**:
+
+- Environment variable configuration
+- API endpoint validation
+- Authentication token handling
+- CORS and security headers
+
+#### Test Configuration
+
+**Vitest Setup** (`vitest.config.ts`):
+
+```typescript
+{
+  environment: "jsdom",           // Browser-like environment
+  setupFiles: ["./src/test/setup.ts"],
+  css: true,                      // Process CSS imports
+  globals: true,                  // Global test APIs
+  pool: "forks",                  // Isolated test execution
+  coverage: {
+    provider: "v8",
+    reporter: ["text", "html", "lcov"],
+    exclude: ["node_modules/", "src/test/", "**/*.d.ts"]
+  }
+}
+```
+
+**Test Lifecycle Management**:
+
+```typescript
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "warn" });
+  DatabaseTestHelpers.clearDatabase();
+});
+
+beforeEach(() => {
+  DatabaseTestHelpers.clearDatabase();
+  document.body.innerHTML = "";
+});
+
+afterEach(() => {
+  server.resetHandlers();
+  DatabaseTestHelpers.clearDatabase();
+});
+
+afterAll(() => server.close());
+```
+
+#### Test Scripts
+
+```json
+{
+  "test": "vitest", // Watch mode for TDD
+  "test:run": "vitest run", // Single run
+  "test:coverage": "vitest run --coverage", // Coverage report
+  "test:ui": "vitest --ui", // Visual test UI
+  "test:watch": "vitest --watch" // Continuous testing
+}
+```
+
+#### Testing Best Practices
+
+1. **Code-Over-Files Configuration**:
+
+   - Environment variables set in `src/test/setup.ts` (no `.env.test` files)
+   - MSW configuration controlled programmatically
+   - Zero external configuration dependencies
+
+2. **Isolation & Cleanup**:
+
+   - Clean database state before each test
+   - DOM cleanup to prevent element accumulation
+   - Handler reset after each test
+   - No shared state between tests
+
+3. **Performance Optimization**:
+
+   - Zero API delays in test mode (`enableDelay: false`)
+   - Parallel test execution with forked processes
+   - Efficient in-memory database operations
+   - Minimal logging to reduce I/O overhead
+
+4. **Realistic Testing**:
+   - MSW intercepts actual HTTP requests
+   - Same API handlers for development and testing
+   - Comprehensive error scenario coverage
+   - Real component lifecycle testing
+
+#### Test Metrics
+
+- **Current Coverage**: Tracked via Vitest coverage reports
+- **Test Execution Speed**: Optimized for sub-second test runs
+- **Test Isolation**: 100% isolated test execution with forks
+- **MSW Integration**: Zero unhandled API requests in tests
+
 ### Test Infrastructure
 
-- **In-Memory Databases**: Fast test execution
-- **Test Containers**: Isolated test environments
-- **Mock Services**: External dependency simulation
+- **Backend**: In-Memory Databases, Test Containers, Mock Services
+- **Frontend**: MSW Node.js Server, jsdom Environment, In-Memory Database
+- **Shared**: Docker Compose for full-stack integration testing (planned)
 
 ## CI/CD Pipeline
 
