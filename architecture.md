@@ -10,7 +10,9 @@ HouseProject is a microservices-based application for managing houses, rooms, an
 - **Backend**: ASP.NET Core Web APIs (HouseService, TemperatureService)
 - **Database**: PostgreSQL with Entity Framework Core
 - **Infrastructure**: Docker, Docker Compose, Multi-stage builds
-- **Testing**: xUnit for backend with comprehensive test coverage
+- **Testing**:
+  - **Backend**: xUnit with comprehensive unit and integration tests
+  - **Frontend**: Vitest + React Testing Library + MSW (Mock Service Worker)
 - **Security**: API Key Authentication, CORS support, Distroless containers
 
 ## System Architecture
@@ -26,18 +28,18 @@ HouseProject is a microservices-based application for managing houses, rooms, an
           CORS-Enabled            HTTPS/API Keys
           API Calls                     │
                 │                       │
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                            Application Layer                                  │
-├──────────────┬──────────────────────┬─────────────────────────────────────────┤
-│   Frontend   │      HouseService    │         TemperatureService              │
-│   Container  │                      │                                         │
-│              │  • House Management  │  • Temperature Data                     │
-│  • React SPA │  • Room Management   │  • House/Room Synchronization           │
-│  • TypeScript│  • Event Publishing  │  • Event Consumption                    │
-│  • Tailwind  │  • API Key Auth      │  • API Key Authentication               │
-│  • ShadCN UI │  • CORS Support      │  • CORS Support                         │
-│  • Vite      │  • Streamlined APIs  │  • Streamlined APIs                     │
-└──────────────┴──────────────────────┴─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            Application Layer                                │
+├──────────────┬──────────────────────┬───────────────────────────────────────┤
+│   Frontend   │      HouseService    │         TemperatureService            │
+│   Container  │                      │                                       │
+│              │  • House Management  │  • Temperature Data                   │
+│  • React SPA │  • Room Management   │  • House/Room Synchronization         │
+│  • TypeScript│  • Event Publishing  │  • Event Consumption                  │
+│  • Tailwind  │  • API Key Auth      │  • API Key Authentication             │
+│  • ShadCN UI │  • CORS Support      │  • CORS Support                       │
+│  • Vite      │  • Streamlined APIs  │  • Streamlined APIs                   │
+└──────────────┴──────────────────────┴───────────────────────────────────────┘
                           │                                       │
                           └─────────────┐         ┌───────────────┘
                                         │         │
@@ -283,6 +285,39 @@ public class HouseDeletedConsumer : IConsumer<IHouseDeleted>
 public class RoomCreatedConsumer : IConsumer<IRoomCreated>
 public class RoomUpdatedConsumer : IConsumer<IRoomUpdated>
 public class RoomDeletedConsumer : IConsumer<IRoomDeleted>
+```
+
+### 4. Inter-service Communication Strategy
+
+To balance reliability, scalability, and developer ergonomics, the project uses a hybrid strategy:
+
+- Write-side changes: Outbox + Message Bus (RabbitMQ/Service Bus)
+
+  - HouseService commits domain changes and persists an outbox record in the same transaction.
+  - A background outbox processor publishes events to the message bus.
+  - TemperatureService consumes events asynchronously and maintains read models (eventual consistency).
+
+- Read-side lookups: Synchronous HTTP
+  - For ad-hoc reads or admin tools, services or the frontend perform HTTP GETs to the owning service (or read model) with resilient timeouts and retries.
+
+Key practices we follow:
+
+- Idempotent consumers in TemperatureService (natural keys; detect duplicates before insert/update).
+- Consumer retries with exponential backoff and error queues to isolate poison messages.
+- Outbox processing metrics and DLQ monitoring to ensure reliable delivery.
+
+ASCII overview:
+
+```
+HouseService (Tx)
+  ├─ DB write (Houses/Rooms)
+  └─ Outbox row (same tx)
+        ↓
+ Outbox Processor → Message Bus → Consumers (TemperatureService)
+                                     ├─ Idempotent upserts
+                                     └─ Retries + DLQ on failure
+
+Reads (on demand): Frontend/Service → HTTP → Owner (or Read Model)
 ```
 
 ## Frontend Architecture
@@ -579,6 +614,71 @@ public async Task GetTemperaturesByRoomAndDate_ValidData_ReturnsTemperatures()
 - **Log Levels**: Debug, Info, Warning, Error, Critical
 - **Centralized Logging**: Azure Log Analytics
 
+## Operational Runbook (Messaging) — Quick Reference
+
+Use this as a lightweight checklist for diagnosing and resolving messaging issues in production.
+
+### What to watch (key signals)
+
+- Outbox lag:
+  - Age of oldest unprocessed outbox record
+  - Outbox queue length (number of pending rows)
+- DLQ depth (per queue):
+  - Count of messages in dead-letter queues (RabbitMQ/Service Bus)
+- Retry rates (consumer side):
+  - Percentage of messages retried in the last 5–15 minutes
+  - Consecutive failures per consumer (watch for spikes)
+- Processing latency:
+  - Time from event published → consumed (end-to-end)
+- Publish failure rate (producer side):
+  - Outbox dispatcher errors; broker publish rejections
+- Throughput and consumer lag:
+  - Messages in vs processed/sec; growing backlog indicates throttling
+
+### Suggested alert thresholds (tune per environment)
+
+- Outbox oldest pending > 2 minutes (prod) or > 10 minutes (non-prod)
+- DLQ depth > 0 sustained for > 5 minutes
+- Retry rate > 5% over a 5-minute window (or any consumer with > 3 consecutive failures)
+- End-to-end latency P95 > 60 seconds for 10 minutes
+- Outbox processor not heartbeating/logging for > 2 minutes
+
+### Where to look (dashboards & tools)
+
+- RabbitMQ Management UI (local) / Azure Service Bus portal (cloud):
+  - Queue depth, DLQ depth, publish/consume rates
+- Application Insights / Log Analytics:
+  - Custom telemetry for retries, handler failures, outbox dispatch timings
+  - Exception traces with consumer/handler names
+- Service logs:
+  - HouseService: OutboxProcessorService logs (dispatch success/failure, lag)
+  - TemperatureService: Consumer logs (duplicate detected, upsert complete, retries)
+
+### Quick remediation steps
+
+1. DLQ contains messages
+   - Inspect error and message payload
+   - Fix the root cause (handler bug, schema mismatch, missing dependency)
+   - Requeue/replay DLQ after fix (ensure consumers are idempotent)
+2. Growing outbox lag
+   - Verify OutboxProcessorService is running and healthy
+   - Check broker connectivity/credentials
+   - Temporarily scale out the processor/consumers to drain backlog
+3. High retry rate or kill switch triggered
+   - Roll back the last deployment for the impacted service
+   - Gate traffic (reduce producers) to stop amplification
+   - Add guard rails in handler (null checks, idempotency checks)
+4. Schema/version issue suspected
+   - Use versioned contracts; deploy consumer updates first (expand/contract)
+   - Keep old fields optional until all consumers are updated
+
+### Good hygiene
+
+- Keep consumers idempotent (check natural keys before writes)
+- Monitor outbox-to-bus delay; aim for sub-minute P95
+- Treat DLQ depth > 0 as a defect to resolve, not a buffer
+- Add alerts on outbox processor health and consumer failure spikes
+
 ## Performance Considerations
 
 ### Scalability
@@ -608,7 +708,9 @@ public async Task GetTemperaturesByRoomAndDate_ValidData_ReturnsTemperatures()
 
 ## Testing Strategy
 
-### Unit Tests (Implemented)
+### Backend Testing (Implemented)
+
+#### Unit Tests
 
 - **HouseService Tests**: 9 comprehensive tests covering all controller endpoints
   - CRUD operations validation
@@ -620,17 +722,172 @@ public async Task GetTemperaturesByRoomAndDate_ValidData_ReturnsTemperatures()
   - Synchronized house/room endpoint testing
 - **Test Framework**: xUnit with comprehensive assertions and mocking
 
-### Integration Tests (Planned)
+#### Integration Tests (Planned)
 
 - **End-to-End**: Full request/response cycles with containerized services
 - **Database Integration**: Real database operations
 - **Message Bus**: Event publishing/consumption testing
 
+### Frontend Testing (Implemented)
+
+#### Test Framework & Tools
+
+- **Vitest**: Fast, modern test runner with native ESM support
+- **React Testing Library**: Component testing with user-centric queries
+- **MSW (Mock Service Worker)**: API mocking for both development and testing
+- **jsdom**: Simulated browser environment for Node.js tests
+- **Coverage**: Vitest coverage-v8 for comprehensive test coverage reporting
+
+#### Testing Architecture
+
+**MSW-Based API Mocking**:
+
+```typescript
+// Unified mocking approach for development and testing
+Development Mode:
+- MSW Service Worker (browser-based)
+- Request/response logging enabled
+- Configurable delays (500ms default)
+- Persistent in-memory database state
+
+Test Mode:
+- MSW Node.js server
+- Zero delays for fast execution
+- Isolated database state per test
+- Minimal logging for clean output
+```
+
+**In-Memory Database** (`@mswjs/data`):
+
+- Full relational data modeling (Houses, Rooms, Temperatures)
+- Unified query interface for CRUD operations
+- Automatic cleanup between tests
+- Realistic test data seeding with `@faker-js/faker`
+
+#### Test Coverage Areas
+
+**Component Tests**:
+
+- React component rendering and behavior
+- User interactions (clicks, form inputs, navigation)
+- State management and data flow
+- Error boundaries and fallback UI
+- Responsive design validation
+
+**Integration Tests**:
+
+- Complete user workflows (create, read, update, delete)
+- Multi-component interactions
+- API call sequences and error handling
+- Navigation and routing flows
+- Authentication and authorization
+
+**Database Integration Tests**:
+
+- CRUD operations through MSW handlers
+- Data relationships (Houses ↔ Rooms ↔ Temperatures)
+- Query filtering and pagination
+- Cascading deletes and referential integrity
+
+**Environment Tests**:
+
+- Environment variable configuration
+- API endpoint validation
+- Authentication token handling
+- CORS and security headers
+
+#### Test Configuration
+
+**Vitest Setup** (`vitest.config.ts`):
+
+```typescript
+{
+  environment: "jsdom",           // Browser-like environment
+  setupFiles: ["./src/test/setup.ts"],
+  css: true,                      // Process CSS imports
+  globals: true,                  // Global test APIs
+  pool: "forks",                  // Isolated test execution
+  coverage: {
+    provider: "v8",
+    reporter: ["text", "html", "lcov"],
+    exclude: ["node_modules/", "src/test/", "**/*.d.ts"]
+  }
+}
+```
+
+**Test Lifecycle Management**:
+
+```typescript
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "warn" });
+  DatabaseTestHelpers.clearDatabase();
+});
+
+beforeEach(() => {
+  DatabaseTestHelpers.clearDatabase();
+  document.body.innerHTML = "";
+});
+
+afterEach(() => {
+  server.resetHandlers();
+  DatabaseTestHelpers.clearDatabase();
+});
+
+afterAll(() => server.close());
+```
+
+#### Test Scripts
+
+```json
+{
+  "test": "vitest", // Watch mode for TDD
+  "test:run": "vitest run", // Single run
+  "test:coverage": "vitest run --coverage", // Coverage report
+  "test:ui": "vitest --ui", // Visual test UI
+  "test:watch": "vitest --watch" // Continuous testing
+}
+```
+
+#### Testing Best Practices
+
+1. **Code-Over-Files Configuration**:
+
+   - Environment variables set in `src/test/setup.ts` (no `.env.test` files)
+   - MSW configuration controlled programmatically
+   - Zero external configuration dependencies
+
+2. **Isolation & Cleanup**:
+
+   - Clean database state before each test
+   - DOM cleanup to prevent element accumulation
+   - Handler reset after each test
+   - No shared state between tests
+
+3. **Performance Optimization**:
+
+   - Zero API delays in test mode (`enableDelay: false`)
+   - Parallel test execution with forked processes
+   - Efficient in-memory database operations
+   - Minimal logging to reduce I/O overhead
+
+4. **Realistic Testing**:
+   - MSW intercepts actual HTTP requests
+   - Same API handlers for development and testing
+   - Comprehensive error scenario coverage
+   - Real component lifecycle testing
+
+#### Test Metrics
+
+- **Current Coverage**: Tracked via Vitest coverage reports
+- **Test Execution Speed**: Optimized for sub-second test runs
+- **Test Isolation**: 100% isolated test execution with forks
+- **MSW Integration**: Zero unhandled API requests in tests
+
 ### Test Infrastructure
 
-- **In-Memory Databases**: Fast test execution
-- **Test Containers**: Isolated test environments
-- **Mock Services**: External dependency simulation
+- **Backend**: In-Memory Databases, Test Containers, Mock Services
+- **Frontend**: MSW Node.js Server, jsdom Environment, In-Memory Database
+- **Shared**: Docker Compose for full-stack integration testing (planned)
 
 ## CI/CD Pipeline
 

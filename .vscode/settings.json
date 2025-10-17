@@ -1,0 +1,8 @@
+{
+  "dotnet.defaultSolution": "HouseProject.sln",
+  "dotnet.preferCSharpExtension": true,
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  }
+}
