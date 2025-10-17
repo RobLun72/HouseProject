@@ -10,6 +10,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseService.Tests", "Back-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemperatureService.Tests", "Back-end\TemperatureService.Tests\TemperatureService.Tests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Back-end", "Back-end", "{FCC1815F-830A-4935-A8FA-2B1FC867340E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageContracts", "Back-end\MessageContracts\MessageContracts.csproj", "{0AE08B67-C04E-40FC-A3D4-CF8A9DB52931}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,11 +36,18 @@ Global
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AE08B67-C04E-40FC-A3D4-CF8A9DB52931}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AE08B67-C04E-40FC-A3D4-CF8A9DB52931}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AE08B67-C04E-40FC-A3D4-CF8A9DB52931}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AE08B67-C04E-40FC-A3D4-CF8A9DB52931}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C1E72B3A-4D9F-4A8B-B5E6-7F2C8D1A9E3B}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0AE08B67-C04E-40FC-A3D4-CF8A9DB52931} = {FCC1815F-830A-4935-A8FA-2B1FC867340E}
 	EndGlobalSection
 EndGlobal

@@ -89,7 +89,15 @@ builder.Services.AddMassTransit(x =>
             h.Password(rabbitMqPassword);
         });
 
-        cfg.ConfigureEndpoints(context);
+        // Configure consumer-level defaults: retries, circuit breaker, etc.
+        cfg.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(3)));
+        cfg.UseKillSwitch(); // Prevent runaway failure loops under sustained faults
+
+        // In-memory outbox ensures idempotent publish within consumer pipeline
+        cfg.UseInMemoryOutbox();
+
+        // Configure endpoints with kebab-case names
+        cfg.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(false));
     });
 });
 

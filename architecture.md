@@ -287,6 +287,39 @@ public class RoomUpdatedConsumer : IConsumer<IRoomUpdated>
 public class RoomDeletedConsumer : IConsumer<IRoomDeleted>
 ```
 
+### 4. Inter-service Communication Strategy
+
+To balance reliability, scalability, and developer ergonomics, the project uses a hybrid strategy:
+
+- Write-side changes: Outbox + Message Bus (RabbitMQ/Service Bus)
+
+  - HouseService commits domain changes and persists an outbox record in the same transaction.
+  - A background outbox processor publishes events to the message bus.
+  - TemperatureService consumes events asynchronously and maintains read models (eventual consistency).
+
+- Read-side lookups: Synchronous HTTP
+  - For ad-hoc reads or admin tools, services or the frontend perform HTTP GETs to the owning service (or read model) with resilient timeouts and retries.
+
+Key practices we follow:
+
+- Idempotent consumers in TemperatureService (natural keys; detect duplicates before insert/update).
+- Consumer retries with exponential backoff and error queues to isolate poison messages.
+- Outbox processing metrics and DLQ monitoring to ensure reliable delivery.
+
+ASCII overview:
+
+```
+HouseService (Tx)
+  ├─ DB write (Houses/Rooms)
+  └─ Outbox row (same tx)
+        ↓
+ Outbox Processor → Message Bus → Consumers (TemperatureService)
+                                     ├─ Idempotent upserts
+                                     └─ Retries + DLQ on failure
+
+Reads (on demand): Frontend/Service → HTTP → Owner (or Read Model)
+```
+
 ## Frontend Architecture
 
 ### 3. Frontend Service
@@ -580,6 +613,71 @@ public async Task GetTemperaturesByRoomAndDate_ValidData_ReturnsTemperatures()
 - **Correlation IDs**: Request tracing across services
 - **Log Levels**: Debug, Info, Warning, Error, Critical
 - **Centralized Logging**: Azure Log Analytics
+
+## Operational Runbook (Messaging) — Quick Reference
+
+Use this as a lightweight checklist for diagnosing and resolving messaging issues in production.
+
+### What to watch (key signals)
+
+- Outbox lag:
+  - Age of oldest unprocessed outbox record
+  - Outbox queue length (number of pending rows)
+- DLQ depth (per queue):
+  - Count of messages in dead-letter queues (RabbitMQ/Service Bus)
+- Retry rates (consumer side):
+  - Percentage of messages retried in the last 5–15 minutes
+  - Consecutive failures per consumer (watch for spikes)
+- Processing latency:
+  - Time from event published → consumed (end-to-end)
+- Publish failure rate (producer side):
+  - Outbox dispatcher errors; broker publish rejections
+- Throughput and consumer lag:
+  - Messages in vs processed/sec; growing backlog indicates throttling
+
+### Suggested alert thresholds (tune per environment)
+
+- Outbox oldest pending > 2 minutes (prod) or > 10 minutes (non-prod)
+- DLQ depth > 0 sustained for > 5 minutes
+- Retry rate > 5% over a 5-minute window (or any consumer with > 3 consecutive failures)
+- End-to-end latency P95 > 60 seconds for 10 minutes
+- Outbox processor not heartbeating/logging for > 2 minutes
+
+### Where to look (dashboards & tools)
+
+- RabbitMQ Management UI (local) / Azure Service Bus portal (cloud):
+  - Queue depth, DLQ depth, publish/consume rates
+- Application Insights / Log Analytics:
+  - Custom telemetry for retries, handler failures, outbox dispatch timings
+  - Exception traces with consumer/handler names
+- Service logs:
+  - HouseService: OutboxProcessorService logs (dispatch success/failure, lag)
+  - TemperatureService: Consumer logs (duplicate detected, upsert complete, retries)
+
+### Quick remediation steps
+
+1. DLQ contains messages
+   - Inspect error and message payload
+   - Fix the root cause (handler bug, schema mismatch, missing dependency)
+   - Requeue/replay DLQ after fix (ensure consumers are idempotent)
+2. Growing outbox lag
+   - Verify OutboxProcessorService is running and healthy
+   - Check broker connectivity/credentials
+   - Temporarily scale out the processor/consumers to drain backlog
+3. High retry rate or kill switch triggered
+   - Roll back the last deployment for the impacted service
+   - Gate traffic (reduce producers) to stop amplification
+   - Add guard rails in handler (null checks, idempotency checks)
+4. Schema/version issue suspected
+   - Use versioned contracts; deploy consumer updates first (expand/contract)
+   - Keep old fields optional until all consumers are updated
+
+### Good hygiene
+
+- Keep consumers idempotent (check natural keys before writes)
+- Monitor outbox-to-bus delay; aim for sub-minute P95
+- Treat DLQ depth > 0 as a defect to resolve, not a buffer
+- Add alerts on outbox processor health and consumer failure spikes
 
 ## Performance Considerations
 
